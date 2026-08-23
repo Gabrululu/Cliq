@@ -9,6 +9,7 @@ const receipt = require('./commands/receipt.js')
 const sync = require('./commands/sync.js')
 const peers = require('./commands/peers.js')
 const ask = require('./commands/ask.js')
+const agent = require('./commands/agent.js')
 
 const commands = {
   help,
@@ -24,7 +25,8 @@ const commands = {
   receipt,
   sync,
   peers,
-  ask
+  ask,
+  agent
 }
 
 async function run (args) {

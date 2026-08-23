@@ -375,3 +375,32 @@ transcript in `TESTING.md` §8 and `pear-cli/README.md`):
 With both fixed, a real installed copy went from `0.0.4` to `0.0.5`
 unattended in about two seconds once the update check ran — full log in
 `pear-cli/README.md`.
+
+## 12. `mcp/server.js` + `agent.js`: WDK Track submission
+
+A second, separate hackathon track (same sponsor, Tether) asks specifically
+for `@tetherto/wdk-cli` — a different, higher-level package from the raw
+`@tetherto/wdk` SDK that `payments/wdk.js` already wraps for the core payment
+flow (§6-7 above) — used as a genuinely central building block, not bolted on
+alongside the existing wallet layer. `src/commands/agent.js` (`merchant agent
+settle <invoice-id>`) is that building block: it imports the *same*
+`MERCHANT_SEED_PHRASE` into `wdk-cli`'s own wallet store (verified identical
+addresses at both index 0 and 1 via `wdk get address`), then shells out to
+`wdk send`/`wdk get` (via `bare-subprocess`, since `wdk-cli` is a Node binary
+and TiendaPay's commands run under Bare) for the actual transfer.
+
+The reason this exists as a distinct command rather than a flag on `pay.js`:
+`pay.js` is meant to be run by a human at a terminal, and there is no
+guardrail *code* between "the user typed this" and "the money moved" —
+that's fine, because a human is the trust boundary. `agent settle` exists
+specifically to be called by something that isn't a human (an MCP client
+acting on an LLM's decision), so the guardrails have to live in the command
+itself, not in a system prompt an agent could be talked out of: a spend cap
+checked before any network call, a recipient that is *always* read from the
+invoice being settled (never a free parameter the caller supplies), and a
+quote/confirm split identical to `pay`'s own `--yes` convention. `mcp/server.js`
+is deliberately thin on top of that — a Node.js process (the MCP SDK isn't
+built for Bare) exposing exactly two tools, `quote_invoice_payment` and
+`confirm_invoice_payment`, that do nothing but spawn `bare index.js agent
+settle ...` and relay its JSON output. All the actual policy lives in one
+place, testable independently of any MCP client.

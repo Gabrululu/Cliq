@@ -22,8 +22,9 @@ Proyecto para [Aleph Hackathon 2026](https://hacki.crecimiento.build/h/aleph-hac
 - [`architecture.md`](architecture.md) — arquitectura tecnica completa (en ingles).
 - [`brandkit.md`](brandkit.md) — paleta, tipografia, logo y guia de voz para armar presentaciones (en ingles).
 - [`deck.md`](deck.md) — contenido del pitch deck, diapositiva por diapositiva (en ingles).
-- [`TESTING.md`](TESTING.md) — checklist de todo lo validado contra infraestructura real (WDK, sync P2P, QVAC, Pear, Pear Track), comando por comando.
+- [`TESTING.md`](TESTING.md) — checklist de todo lo validado contra infraestructura real (WDK, sync P2P, QVAC, Pear, Pear Track, WDK Track), comando por comando.
 - [`pear-cli/README.md`](pear-cli/README.md) — la entrega del Pear Track: CLI standalone instalable con `pear install` + OTA real.
+- Más abajo, sección ["WDK Track — agente con guardrails"](#wdk-track-tether--agente-con-guardrails-sobre-tetherowdk-cli--mcp): la entrega del WDK Track.
 
 ## Landing page
 
@@ -64,6 +65,8 @@ Un comercio pequeno necesita cobrar en USD₮, llevar sus cuentas y verificar su
 - [x] Fase 6 - Consultas con QVAC: `ask`
 - [x] Fase 7 - Release y OTA con Pear (`stage`/`seed`/`dump` probados contra la red real, ver seccion abajo)
 - [x] Pear Track - CLI standalone instalable con `pear install` + actualizacion OTA real, ver [`pear-cli/`](pear-cli/)
+- [x] WDK Track (1/2) - agente con guardrails sobre `@tetherto/wdk-cli` + MCP, ver seccion abajo
+- [ ] WDK Track (2/2, gasless) - pendiente de un token/paymaster propio, ver "Limitaciones conocidas"
 
 ## Requisitos
 
@@ -288,6 +291,55 @@ tiendapay-cli --version
 
 Con actualizaciones OTA reales probadas de punta a punta (una copia instalada se actualizo sola en ~2 segundos tras stagear una version nueva). Detalle completo, incluidos dos bugs reales encontrados y arreglados en el proceso, en [`pear-cli/README.md`](pear-cli/README.md) y en `TESTING.md` seccion 8.
 
+## WDK Track (Tether) — agente con guardrails sobre `@tetherto/wdk-cli` + MCP
+
+Track separado del hackathon, mismo sponsor que Pears (regla del brief: "Pick one prize track and go deep" — se prioriza **Track 1, CLI + MCP**, no Track 2/gasless, que requiere un paymaster propio de Candide/Pimlico que todavia no esta armado).
+
+**Paquetes WDK usados** (version instalada, ver `package.json`):
+- `@tetherto/wdk-cli` `1.0.0-beta.3` — el CLI/wallet local + servidor MCP nativo, pieza central de esta entrega.
+- `@modelcontextprotocol/sdk` `1.30.0` — para el servidor MCP propio con los guardrails.
+- (ya presentes desde antes) `@tetherto/wdk` `1.0.0-beta.16` + `@tetherto/wdk-wallet-evm` `1.0.0-beta.17` — la capa de pagos original de TiendaPay (`pay.js`), sin tocar.
+
+**Que se construyo**: un comando nuevo, `merchant agent settle <invoice-id> [--yes]`, que paga facturas de TiendaPay usando `wdk-cli` (no el SDK crudo que ya usaba `pay.js`), con guardrails **en codigo**:
+1. Tope de gasto (`AGENT_SPEND_CAP_USDT` en `.env`) — rechaza antes de tocar la red si la factura lo supera.
+2. El destinatario es siempre el de la factura — nunca un parametro libre que el agente (o quien le hable) pueda elegir.
+3. Confirmacion explicita — sin `--yes` solo cotiza via `wdk send --dry-run`.
+
+Expuesto a un agente de IA con un servidor MCP propio, [`mcp/server.js`](mcp/server.js), con dos tools: `quote_invoice_payment` y `confirm_invoice_payment` — ninguna de las dos acepta un monto o direccion libre, solo un `invoiceId`.
+
+**Permalinks a donde se usa WDK** (reemplazar `main` por el commit exacto al pushear):
+- [`src/commands/agent.js`](https://github.com/gabrululu/tiendapay/blob/main/src/commands/agent.js) — llama a `wdk send`/`wdk get` vía `bare-subprocess`, con los guardrails.
+- [`mcp/server.js`](https://github.com/gabrululu/tiendapay/blob/main/mcp/server.js) — servidor MCP que expone los dos tools.
+
+### Setup desde un clon limpio
+
+```bash
+npm install    # o pnpm install — instala @tetherto/wdk-cli entre otras deps
+
+# 1. Importar la MISMA seed que ya usa TiendaPay (.env) al wallet de wdk-cli
+grep MERCHANT_SEED_PHRASE .env | cut -d= -f2- | \
+  WDK_PASSPHRASE="elegi-una-passphrase" ./node_modules/.bin/wdk wallet import --name tiendapay --seed-stdin
+
+# 2. Desbloquear (queda un daemon en background; ttl 0 = no expira)
+WDK_PASSPHRASE="elegi-una-passphrase" ./node_modules/.bin/wdk wallet unlock --name tiendapay --ttl 0
+
+# 3. Registrar el token USD₮ de prueba (el "usdt" built-in de wdk-cli en Sepolia
+#    apunta al contrato oficial, que no podemos mintear — ver TESTING.md #9)
+./node_modules/.bin/wdk token add '{"network":"sepolia","token":"tpusdt","symbol":"tpUSDT","decimals":6,"isNative":false,"address":"0xc4dcc311c028e341fd8602d8eb89c5de94625927"}'
+
+# 4. Probar
+bare index.js agent settle <invoice-id>          # cotiza
+bare index.js agent settle <invoice-id> --yes    # paga de verdad
+
+# 5. Habilitar el MCP server para un agente (Claude Code ya lo lee via .mcp.json en este repo)
+#    Para Claude Desktop / OpenClaw, usar el setup nativo de wdk-cli para sus propios tools:
+./node_modules/.bin/wdk mcp setup --ai-tool claude-code
+```
+
+**Red y tokens**: Sepolia (`chainId 11155111`). Token de prueba: `ERC20Mock` en `0xc4dcc311c028e341fd8602d8eb89c5de94625927` (mismo contrato usado en la seccion 2 de `TESTING.md`, con `mint(address,uint256)` publico para autoabastecerse).
+
+**Validado de punta a punta** (ver `TESTING.md` seccion 9 para el detalle completo, con salidas reales): mismo wallet confirmado vía `wdk get address`, balance real leido, cotizacion y pago real (`txHash` real, recibo firmado igual que `pay`), guardrail de tope rechazando una factura de 50 USDT con el tope en 10, y las dos tools probadas a traves del protocolo MCP real (no solo por CLI).
+
 ## Limitaciones conocidas
 
 Esta lista refleja lo que **falta de verdad**, no lo que "no se pudo probar" — todo lo que sigue si se probo contra red real (ver `TESTING.md` para el detalle completo, comando por comando):
@@ -298,6 +350,8 @@ Esta lista refleja lo que **falta de verdad**, no lo que "no se pudo probar" —
 - El flujo de "produccion" con multisig de Pear (`pear provision` + `pear multisig`) se investigo pero no se implemento — se decidio que no vale la pena la complejidad de gobernanza de releases para el tamaño actual del proyecto. Detalle completo en `TESTING.md` seccion 7.
 - La CLI standalone de `pear-cli/` (Pear Track) solo se buildeo para **linux-x64** — hace falta un host macOS/Windows (o CI) para generar esos binarios.
 - El `pear seed` de cualquiera de los links (landing/app o `pear-cli/`) tiene que seguir corriendo en una maquina que se mantenga prendida durante el periodo de judging — un sandbox de desarrollo efimero no alcanza para eso.
+- **WDK Track 2 (gasless) no esta implementado.** El paymaster publico de Candide para `smart-account-sepolia` exige el USD₮ "oficial" de Sepolia (`0xd077A4...`), cuyo `mint` esta restringido a una wallet que no controlamos (verificado con `eth_call`, revierte con `Ownable: caller is not the owner`). Para implementarlo hace falta conseguir ese token de un mentor/faucet, o armar un paymaster propio (Candide/Pimlico) apuntado a nuestro `ERC20Mock`.
+- `merchant agent settle` (WDK Track 1) requiere que el wallet de `wdk-cli` este importado y desbloqueado a mano una vez (`wdk wallet import` + `wdk wallet unlock --ttl 0`, ver seccion de arriba) antes de usarse — no lo hace el comando en si.
 
 ## Seguridad
 
@@ -318,6 +372,9 @@ src/
   p2p/                    Sincronizacion via Hyperswarm (protocolo, fusion, swarm)
   ai/                     Contexto + integracion con QVAC para "merchant ask"
   util/                   Helpers compartidos (flags, .env, formato de montos, paths)
+  commands/agent.js       WDK Track: "agent settle", guardrails sobre @tetherto/wdk-cli
+mcp/
+  server.js               WDK Track: servidor MCP (Node.js) con los tools quote/confirm_invoice_payment
 public/
   index.html             Landing page (autocontenida)
   assets/                 Logo y miniatura de la landing

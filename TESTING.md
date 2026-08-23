@@ -155,6 +155,27 @@ Track separado del hackathon con su propio brief: "Build a standalone CLI tool, 
 - El `pear seed` de este link necesita seguir corriendo en una máquina que se mantenga prendida durante todo el judging — este sandbox es efímero, no sirve para eso.
 - Falta grabar el video demo (instalación + update OTA en vivo) — eso lo tiene que hacer el usuario.
 
+## 9. WDK Track (Tether) — agente con guardrails sobre `@tetherto/wdk-cli` + MCP
+
+Track separado, mismo sponsor que Pears. Regla del brief: "Pick one prize track and go deep" — se priorizó **Track 1 (CLI + MCP, $1000)** sobre Track 2 (gasless, $500) porque no depende de ningún servicio externo nuevo (Track 2 necesita un paymaster propio de Candide/Pimlico, y ademas se encontró que el USD₮ "oficial" que el paymaster público de Sepolia exige tiene el `mint` restringido a una wallet que no controlamos — ver hallazgo abajo).
+
+**Qué se construyó**: `merchant agent settle <invoice-id> [--yes] [--json]` (`src/commands/agent.js`) — un comando nuevo que paga una factura de TiendaPay usando `@tetherto/wdk-cli` (no el SDK crudo `@tetherto/wdk` que ya usa `pay.js` — es una pieza nueva y central, no un wrapper decorativo), con guardrails **en código, no en un prompt**:
+1. Tope de gasto (`AGENT_SPEND_CAP_USDT`) — rechazado antes de llamar a `wdk send` si la factura lo supera.
+2. Allowlist implícita — el destinatario es siempre `invoice.recipient`, nunca un parámetro libre.
+3. Confirmación explícita — sin `--yes` solo cotiza (`wdk send --dry-run`), igual patrón que `pay <id>`/`pay <id> --yes`.
+
+Expuesto a un agente vía un servidor MCP propio (`mcp/server.js`, Node.js — no Bare, por compatibilidad con `@modelcontextprotocol/sdk`) con dos tools: `quote_invoice_payment` y `confirm_invoice_payment`. Cada una solo recibe un `invoiceId`; el servidor no reimplementa ninguna lógica, solo invoca `bare index.js agent settle ...` y devuelve el resultado.
+
+**Validado de punta a punta (2026-08-23), contra la wallet real ya fondeada en Sepolia**:
+- [x] `wdk wallet import --seed-stdin` con el mismo `MERCHANT_SEED_PHRASE` de `.env` → misma wallet exacta confirmada (`wdk get address --index 1` devuelve `0x86aCC9bc...`, la misma que veníamos usando).
+- [x] `wdk get balance --token tpusdt --index 1` lee el balance real (990 tpUSDT, coincide con lo que quedó tras los pagos de la sección 2).
+- [x] `agent settle <id>` sin `--yes` cotiza vía `wdk send --dry-run` (monto + comisión real estimada), no manda nada.
+- [x] `agent settle <id> --yes` manda de verdad — `txHash` real, recibo firmado y encadenado igual que con `pay` (mismo `receipt verify` con firma y encadenamiento OK).
+- [x] Guardrail de tope: una factura de 50 USDT (tope configurado en 10) se rechaza **antes** de invocar `wdk send`, con o sin `--yes`.
+- [x] Probado tanto por CLI directa como a través del servidor MCP real (con un cliente MCP de prueba: `listTools` devuelve las dos tools, `callTool` en ambos casos — cotización y rechazo por guardrail — devuelve exactamente el mismo resultado que la CLI).
+
+**Hallazgo importante (no bloquea Track 1, sí a Track 2 por ahora)**: el token USD₮ "oficial" que `wdk-cli` reconoce built-in para Sepolia (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, el mismo que exige el paymaster público de Candide preconfigurado en la network `smart-account-sepolia`) tiene su función `mint` restringida a una wallet que no controlamos (`Ownable: caller is not the owner`, verificado con `eth_call` directo). Por eso el `agent settle` usa nuestro propio `ERC20Mock` de la sección 2 bajo un símbolo custom (`tpusdt`, agregado con `wdk token add`), no el `usdt` built-in.
+
 ## Orden sugerido
 
 1. **#2 Pagos** (WDK contra red real).

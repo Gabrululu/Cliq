@@ -22,15 +22,19 @@
     "test": "bare test/index.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@qvac/llm-llamacpp": "^0.46.0",
     "@qvac/sdk": "^0.17.1",
     "@tetherto/wdk": "^1.0.0-beta.16",
+    "@tetherto/wdk-cli": "^1.0.0-beta.3",
     "@tetherto/wdk-wallet-evm": "^1.0.0-beta.17",
     "bare-env": "^3.0.1",
     "bare-fs": "^4.0.0",
     "bare-os": "^3.0.0",
     "bare-path": "^3.0.0",
+    "bare-subprocess": "^6.1.0",
     "hypercore-crypto": "^3.7.0",
-    "hyperswarm": "^4.17.0"
+    "hyperswarm": "^4.17.0",
+    "zod": "^3.25.76"
   }
 }

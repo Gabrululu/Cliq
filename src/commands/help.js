@@ -17,6 +17,7 @@ Comandos:
   sync --room <sala>              Sincroniza el libro mayor con otras terminales (P2P)
   peers --room <sala>             Lista los peers detectados en una sala P2P
   ask "<pregunta>"                Consulta el libro mayor en lenguaje natural (QVAC, local)
+  agent settle <id> [--yes]       Paga una factura via @tetherto/wdk-cli con guardrails (pensado para un agente MCP)
   version                       Muestra la version instalada
   help                          Muestra esta ayuda
 `
