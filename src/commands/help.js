@@ -18,6 +18,7 @@ Comandos:
   peers --room <sala>             Lista los peers detectados en una sala P2P
   ask "<pregunta>"                Consulta el libro mayor en lenguaje natural (QVAC, local)
   agent settle <id> [--yes]       Paga una factura via @tetherto/wdk-cli con guardrails (pensado para un agente MCP)
+  gasless pay <id> [--yes]        Paga una factura sin ETH: fee cobrado en USD₮ (ERC-4337 + paymaster Pimlico)
   version                       Muestra la version instalada
   help                          Muestra esta ayuda
 `

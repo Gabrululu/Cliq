@@ -66,7 +66,7 @@ Un comercio pequeno necesita cobrar en USD₮, llevar sus cuentas y verificar su
 - [x] Fase 7 - Release y OTA con Pear (`stage`/`seed`/`dump` probados contra la red real, ver seccion abajo)
 - [x] Pear Track - CLI standalone instalable con `pear install` + actualizacion OTA real, ver [`pear-cli/`](pear-cli/)
 - [x] WDK Track (1/2) - agente con guardrails sobre `@tetherto/wdk-cli` + MCP, ver seccion abajo
-- [ ] WDK Track (2/2, gasless) - pendiente de un token/paymaster propio, ver "Limitaciones conocidas"
+- [x] WDK Track (2/2, gasless) - pago real sin ETH, fee en USD₮ (ERC-4337 + paymaster Pimlico), ver seccion abajo
 
 ## Requisitos
 
@@ -291,9 +291,9 @@ tiendapay-cli --version
 
 Con actualizaciones OTA reales probadas de punta a punta (una copia instalada se actualizo sola en ~2 segundos tras stagear una version nueva). Detalle completo, incluidos dos bugs reales encontrados y arreglados en el proceso, en [`pear-cli/README.md`](pear-cli/README.md) y en `TESTING.md` seccion 8.
 
-## WDK Track (Tether) — agente con guardrails sobre `@tetherto/wdk-cli` + MCP
+## WDK Track (Tether) — Track 1: agente con guardrails sobre `@tetherto/wdk-cli` + MCP
 
-Track separado del hackathon, mismo sponsor que Pears (regla del brief: "Pick one prize track and go deep" — se prioriza **Track 1, CLI + MCP**, no Track 2/gasless, que requiere un paymaster propio de Candide/Pimlico que todavia no esta armado).
+Track separado del hackathon, mismo sponsor que Pears (regla del brief: "Pick one prize track and go deep" dentro de WDK — se implementaron los dos premios igual, ver tambien la seccion "Track 2" mas abajo).
 
 **Paquetes WDK usados** (version instalada, ver `package.json`):
 - `@tetherto/wdk-cli` `1.0.0-beta.3` — el CLI/wallet local + servidor MCP nativo, pieza central de esta entrega.
@@ -308,8 +308,9 @@ Track separado del hackathon, mismo sponsor que Pears (regla del brief: "Pick on
 Expuesto a un agente de IA con un servidor MCP propio, [`mcp/server.js`](mcp/server.js), con dos tools: `quote_invoice_payment` y `confirm_invoice_payment` — ninguna de las dos acepta un monto o direccion libre, solo un `invoiceId`.
 
 **Permalinks a donde se usa WDK** (reemplazar `main` por el commit exacto al pushear):
-- [`src/commands/agent.js`](https://github.com/gabrululu/tiendapay/blob/main/src/commands/agent.js) — llama a `wdk send`/`wdk get` vía `bare-subprocess`, con los guardrails.
-- [`mcp/server.js`](https://github.com/gabrululu/tiendapay/blob/main/mcp/server.js) — servidor MCP que expone los dos tools.
+- [`src/commands/agent.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/src/commands/agent.js) — llama a `wdk send`/`wdk get` vía `bare-subprocess`, con los guardrails (Track 1).
+- [`mcp/server.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/mcp/server.js) — servidor MCP que expone los dos tools (Track 1).
+- [`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/src/commands/gasless.js) — pago gasless via ERC-4337 + paymaster (Track 2).
 
 ### Setup desde un clon limpio
 
@@ -340,6 +341,69 @@ bare index.js agent settle <invoice-id> --yes    # paga de verdad
 
 **Validado de punta a punta** (ver `TESTING.md` seccion 9 para el detalle completo, con salidas reales): mismo wallet confirmado vía `wdk get address`, balance real leido, cotizacion y pago real (`txHash` real, recibo firmado igual que `pay`), guardrail de tope rechazando una factura de 50 USDT con el tope en 10, y las dos tools probadas a traves del protocolo MCP real (no solo por CLI).
 
+## WDK Track — Track 2: pago gasless (fee en USD₮, sin ETH)
+
+**Modulo usado**: `@tetherto/wdk-wallet-evm-erc-4337` (viene incluido como dependencia de `@tetherto/wdk-cli`) — cuentas inteligentes ERC-4337 con paymaster, para que quien paga no necesite tener ETH: el fee de red se cobra en USD₮.
+
+**Que se construyo**: `merchant gasless pay <invoice-id> [--yes]` ([`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/src/commands/gasless.js)) — mismo patron que `agent settle` (cotiza sin `--yes`, paga de verdad con `--yes`, genera el mismo recibo firmado), pero contra una **cuenta inteligente** en vez de la wallet EVM comun. La cuenta inteligente tiene una direccion distinta a la wallet normal (confirmado: `0x8469a1A3...` vs `0x86aCC9bc...` del mismo seed) y nunca necesito ETH para pagar — el paymaster de Pimlico cobra el fee directo en USD₮.
+
+### Setup (adicional al de Track 1)
+
+```bash
+# 1. Reclamar USD₮ de prueba para el paymaster (fixture de Pimlico, precio de oraculo fijo en $1):
+#    https://dashboard.pimlico.io -> Test Faucet -> USD₮ (Test) -> Sepolia -> tu direccion
+#    (la direccion de "wdk get address --network sepolia --index 1")
+
+# 2. Conseguir tu API key: dashboard.pimlico.io -> API Keys -> Create API key
+#    Guardarla en .env como PIMLICO_API_KEY=...
+
+# 3. Averiguar la direccion real del paymaster para USD₮ en Sepolia (NO es un valor fijo,
+#    Pimlico la devuelve por API — no la copies de otro lado):
+curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"pimlico_getTokenQuotes","params":[{"tokens":["0xd077A400968890Eacc75cdc901F0356c943e4fDb"]},"0x0000000071727De22E5E9d8BAf0edAc6f37da032","0xaa36a7"]}' \
+  "https://api.pimlico.io/v2/11155111/rpc?apikey=$PIMLICO_API_KEY"
+# -> result.quotes[0].paymaster
+
+# 4. Crear la network gasless custom en wdk-cli (usar la direccion del paso 3):
+./node_modules/.bin/wdk network create '{
+  "network": "smart-account-sepolia-pimlico",
+  "displayName": "Smart Account Sepolia (Pimlico)",
+  "module": "@tetherto/wdk-wallet-evm-erc-4337",
+  "nativeSymbol": "ETH",
+  "decimals": 18,
+  "testnet": true,
+  "config": {
+    "chainId": 11155111,
+    "provider": "https://ethereum-sepolia-rpc.publicnode.com",
+    "bundlerUrl": "https://api.pimlico.io/v2/11155111/rpc?apikey='"$PIMLICO_API_KEY"'",
+    "paymasterUrl": "https://api.pimlico.io/v2/11155111/rpc?apikey='"$PIMLICO_API_KEY"'",
+    "paymasterAddress": "<resultado del paso 3>",
+    "entryPointAddress": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    "safeModulesVersion": "0.3.0",
+    "paymasterToken": { "address": "0xd077A400968890Eacc75cdc901F0356c943e4fDb" },
+    "transferMaxFee": 1000000000
+  }
+}'
+./node_modules/.bin/wdk token add '{"network":"smart-account-sepolia-pimlico","token":"eth","symbol":"ETH","decimals":18,"isNative":true}'
+./node_modules/.bin/wdk token add '{"network":"smart-account-sepolia-pimlico","token":"usdt","symbol":"USD₮","decimals":6,"isNative":false,"address":"0xd077A400968890Eacc75cdc901F0356c943e4fDb"}'
+
+# 5. Fondear la cuenta inteligente (la direccion cambia respecto a la wallet normal):
+#    wdk get address --network smart-account-sepolia-pimlico --index 1
+#    Transferirle USD₮ desde la wallet normal una vez (ese paso si necesita ETH):
+./node_modules/.bin/wdk send --network sepolia --to <direccion-cuenta-inteligente> --amount 100 --token usdt-official --index 1
+
+# 6. IMPORTANTE: reiniciar el daemon para que tome la config nueva
+#    (wdk-cli cachea la config de networks al arrancar el daemon en background)
+./node_modules/.bin/wdk wallet lock --all
+WDK_PASSPHRASE="..." ./node_modules/.bin/wdk wallet unlock --name tiendapay --ttl 0
+
+# 7. Probar
+bare index.js gasless pay <invoice-id>          # cotiza, sin ETH
+bare index.js gasless pay <invoice-id> --yes    # paga de verdad, fee en USD₮
+```
+
+**Validado de punta a punta con dinero real en Sepolia** (detalle completo en `TESTING.md` seccion 10): balance de ETH de la cuenta inteligente confirmado en 0 en todo momento, envio real con `txHash` real y fee cobrado en USD₮, recibo firmado y encadenado igual que el resto de los metodos de pago.
+
 ## Limitaciones conocidas
 
 Esta lista refleja lo que **falta de verdad**, no lo que "no se pudo probar" — todo lo que sigue si se probo contra red real (ver `TESTING.md` para el detalle completo, comando por comando):
@@ -350,7 +414,8 @@ Esta lista refleja lo que **falta de verdad**, no lo que "no se pudo probar" —
 - El flujo de "produccion" con multisig de Pear (`pear provision` + `pear multisig`) se investigo pero no se implemento — se decidio que no vale la pena la complejidad de gobernanza de releases para el tamaño actual del proyecto. Detalle completo en `TESTING.md` seccion 7.
 - La CLI standalone de `pear-cli/` (Pear Track) solo se buildeo para **linux-x64** — hace falta un host macOS/Windows (o CI) para generar esos binarios.
 - El `pear seed` de cualquiera de los links (landing/app o `pear-cli/`) tiene que seguir corriendo en una maquina que se mantenga prendida durante el periodo de judging — un sandbox de desarrollo efimero no alcanza para eso.
-- **WDK Track 2 (gasless) no esta implementado.** El paymaster publico de Candide para `smart-account-sepolia` exige el USD₮ "oficial" de Sepolia (`0xd077A4...`), cuyo `mint` esta restringido a una wallet que no controlamos (verificado con `eth_call`, revierte con `Ownable: caller is not the owner`). Para implementarlo hace falta conseguir ese token de un mentor/faucet, o armar un paymaster propio (Candide/Pimlico) apuntado a nuestro `ERC20Mock`.
+- La network gasless custom (`smart-account-sepolia-pimlico`) vive en la config local de `wdk-cli` (`~/.config/wdk-cli/config.json`), no en este repo — hay que recrearla en cada maquina nueva con los pasos de la seccion "WDK Track — Track 2" (incluida la API key propia de Pimlico, que no se comparte).
+- Tras cualquier `wdk network create`/`wdk token add`, hay que reiniciar el daemon de `wdk-cli` (`wallet lock --all` + `wallet unlock`) para que tome la config nueva — no la relee solo. Bug real encontrado al implementar Track 2, documentado en `TESTING.md` seccion 10.
 - `merchant agent settle` (WDK Track 1) requiere que el wallet de `wdk-cli` este importado y desbloqueado a mano una vez (`wdk wallet import` + `wdk wallet unlock --ttl 0`, ver seccion de arriba) antes de usarse — no lo hace el comando en si.
 
 ## Seguridad
@@ -372,7 +437,8 @@ src/
   p2p/                    Sincronizacion via Hyperswarm (protocolo, fusion, swarm)
   ai/                     Contexto + integracion con QVAC para "merchant ask"
   util/                   Helpers compartidos (flags, .env, formato de montos, paths)
-  commands/agent.js       WDK Track: "agent settle", guardrails sobre @tetherto/wdk-cli
+  commands/agent.js       WDK Track 1: "agent settle", guardrails sobre @tetherto/wdk-cli
+  commands/gasless.js     WDK Track 2: "gasless pay", fee en USD₮ via ERC-4337 + paymaster
 mcp/
   server.js               WDK Track: servidor MCP (Node.js) con los tools quote/confirm_invoice_payment
 public/

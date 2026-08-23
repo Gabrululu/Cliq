@@ -116,6 +116,12 @@ works fully with QVAC turned off.
   - The CLI installs with a single `pear install pear://<key>` — a
     standalone binary, no Node/Bare/Pear required on the receiving machine
     — and a live update reached that installed copy automatically.
+  - Both WDK Track prizes, done and verified with real transactions: an
+    `agent settle` command (`@tetherto/wdk-cli` + a custom MCP server) that
+    pays an invoice only inside code-enforced guardrails — spend cap, fixed
+    recipient, quote-then-confirm — and a `gasless pay` command that settles
+    an invoice with zero ETH in the wallet, fee paid entirely in USD₮ via an
+    ERC-4337 smart account and a Pimlico paymaster.
 - Two real bugs were found and fixed by actually running this against live
   networks, not just reading the code: a P2P hang with no DHT bootstrap, and
   an updater silently looking in the wrong place for its own binary.

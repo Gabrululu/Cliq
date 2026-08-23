@@ -404,3 +404,35 @@ built for Bare) exposing exactly two tools, `quote_invoice_payment` and
 `confirm_invoice_payment`, that do nothing but spawn `bare index.js agent
 settle ...` and relay its JSON output. All the actual policy lives in one
 place, testable independently of any MCP client.
+
+## 13. `gasless.js`: WDK Track 2 (fee paid in USD₮, no ETH)
+
+The same WDK Track offers a second prize for a gasless module, paid for by
+the merchant's USD₮ instead of a native-gas balance. `src/commands/gasless.js`
+(`merchant gasless pay <invoice-id>`) is the same `pay`/`agent settle` shape
+— quote by default, `--yes` to actually broadcast — but points `wdk send` at
+a different `wdk-cli` network: `smart-account-sepolia-pimlico`, built on
+`@tetherto/wdk-wallet-evm-erc-4337` instead of a plain EOA network. That
+network config wires an ERC-4337 smart account (same seed, index 1, but a
+*different* on-chain address than the EOA — the two were verified distinct
+before any funds moved) to Pimlico's bundler/paymaster
+(`https://api.pimlico.io/v2/11155111/rpc?apikey=...`), with the paymaster
+told to take its fee in the "official" Sepolia USD₮ contract rather than ETH.
+
+Two things had to be true before this worked, both discovered by testing
+against the real service rather than assumed from docs: the smart account
+needed its own USD₮ funding (a one-time bootstrap transfer from the EOA,
+verified via `pimlico_getSupportedTokens`/`pimlico_getTokenQuotes` that this
+specific token is what Pimlico's paymaster actually accepts on Sepolia), and
+`wdk-cli`'s background daemon caches network config at the process that
+started it — a `network create` after `wallet unlock --ttl 0` silently has
+no effect until the daemon is restarted (`wallet lock --all` then
+`wallet unlock` again). Full transcript, including the real
+`pimlico_getTokenQuotes` response and the fee-cap bug before that fix, is in
+`TESTING.md`.
+
+The result: a real transfer where the smart account held zero ETH at every
+point before, during, and after the transaction, and the same signed-ledger
+receipt (`ledger/events.js`, `invoice_paid`) as every other payment path in
+TiendaPay — the merchant-facing invoice/receipt model doesn't change based
+on which module actually moved the money.

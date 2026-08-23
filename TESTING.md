@@ -155,9 +155,9 @@ Track separado del hackathon con su propio brief: "Build a standalone CLI tool, 
 - El `pear seed` de este link necesita seguir corriendo en una máquina que se mantenga prendida durante todo el judging — este sandbox es efímero, no sirve para eso.
 - Falta grabar el video demo (instalación + update OTA en vivo) — eso lo tiene que hacer el usuario.
 
-## 9. WDK Track (Tether) — agente con guardrails sobre `@tetherto/wdk-cli` + MCP
+## 9. WDK Track (Tether) — Track 1: agente con guardrails sobre `@tetherto/wdk-cli` + MCP
 
-Track separado, mismo sponsor que Pears. Regla del brief: "Pick one prize track and go deep" — se priorizó **Track 1 (CLI + MCP, $1000)** sobre Track 2 (gasless, $500) porque no depende de ningún servicio externo nuevo (Track 2 necesita un paymaster propio de Candide/Pimlico, y ademas se encontró que el USD₮ "oficial" que el paymaster público de Sepolia exige tiene el `mint` restringido a una wallet que no controlamos — ver hallazgo abajo).
+Track separado, mismo sponsor que Pears. Regla del brief: "Pick one prize track and go deep" — se arrancó por **Track 1 (CLI + MCP, $1000)** porque no dependía de ningún servicio externo nuevo. Track 2 (gasless) se retomó despues y tambien quedo resuelto — ver seccion 10.
 
 **Qué se construyó**: `merchant agent settle <invoice-id> [--yes] [--json]` (`src/commands/agent.js`) — un comando nuevo que paga una factura de TiendaPay usando `@tetherto/wdk-cli` (no el SDK crudo `@tetherto/wdk` que ya usa `pay.js` — es una pieza nueva y central, no un wrapper decorativo), con guardrails **en código, no en un prompt**:
 1. Tope de gasto (`AGENT_SPEND_CAP_USDT`) — rechazado antes de llamar a `wdk send` si la factura lo supera.
@@ -174,7 +174,27 @@ Expuesto a un agente vía un servidor MCP propio (`mcp/server.js`, Node.js — n
 - [x] Guardrail de tope: una factura de 50 USDT (tope configurado en 10) se rechaza **antes** de invocar `wdk send`, con o sin `--yes`.
 - [x] Probado tanto por CLI directa como a través del servidor MCP real (con un cliente MCP de prueba: `listTools` devuelve las dos tools, `callTool` en ambos casos — cotización y rechazo por guardrail — devuelve exactamente el mismo resultado que la CLI).
 
-**Hallazgo importante (no bloquea Track 1, sí a Track 2 por ahora)**: el token USD₮ "oficial" que `wdk-cli` reconoce built-in para Sepolia (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, el mismo que exige el paymaster público de Candide preconfigurado en la network `smart-account-sepolia`) tiene su función `mint` restringida a una wallet que no controlamos (`Ownable: caller is not the owner`, verificado con `eth_call` directo). Por eso el `agent settle` usa nuestro propio `ERC20Mock` de la sección 2 bajo un símbolo custom (`tpusdt`, agregado con `wdk token add`), no el `usdt` built-in.
+**Hallazgo (no bloqueó Track 1, sí retrasó Track 2 hasta resolverlo)**: el token USD₮ "oficial" que `wdk-cli` reconoce built-in para Sepolia (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, el mismo que exige el paymaster público de Candide preconfigurado en la network `smart-account-sepolia`) tiene su función `mint` restringida a una wallet que no controlamos (`Ownable: caller is not the owner`, verificado con `eth_call` directo). Por eso el `agent settle` usa nuestro propio `ERC20Mock` de la sección 2 bajo un símbolo custom (`tpusdt`, agregado con `wdk token add`), no el `usdt` built-in. La solución real para conseguir el token oficial se encontró y se documenta en la sección 10.
+
+## 10. WDK Track — Track 2: pago gasless (fee en USD₮, sin ETH)
+
+**El mismo hallazgo de la sección 9 también bloqueaba Pimlico, no solo Candide**: se confirmó llamando directo al RPC público de Pimlico (`pimlico_getSupportedTokens` en `https://public.pimlico.io/v2/11155111/rpc`) que su paymaster de Sepolia también exige el mismo USD₮ oficial (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`) — cambiar de proveedor de paymaster no evitaba el problema.
+
+**Cómo se resolvió**: Pimlico tiene un **faucet de tokens de prueba** para su paymaster (`Claim Test ERC20 Tokens`, con precio de oráculo fijo en $1 para testing) que el usuario encontró y usó para reclamar 1000 USD₮ de prueba directo a `0x86aCC9bc5AF6d963F72B65Ba51354E50A32F4504` (la cuenta que ya usábamos). Confirmado con `wdk get balance --network sepolia --token usdt-official --index 1` → `1000 USDT`.
+
+**Config armada (real, sin adivinar nada — investigado en la documentación oficial de WDK y Pimlico antes de escribir cualquier valor)**:
+- Formato de URL de Pimlico (bundler y paymaster comparten la misma): `https://api.pimlico.io/v2/{chainId}/rpc?apikey={API_KEY}` — confirmado en `docs.pimlico.io/guides/tutorials/tutorial-2`.
+- La dirección del contrato paymaster **no es un valor fijo** — se obtiene con una llamada real a `pimlico_getTokenQuotes` (params: `[{tokens:[...]}, entryPointAddress, chainIdHex]`), que devolvió `0x777777777777AeC03fd955926DbF81597e66834C` para el USD₮ oficial en Sepolia.
+- Se creó una network custom en `wdk-cli` (`wdk network create`) llamada `smart-account-sepolia-pimlico`, módulo `@tetherto/wdk-wallet-evm-erc-4337`, con esos valores — ver el JSON completo en el README, sección WDK Track 2.
+
+**Bug real encontrado**: subir `transferMaxFee` en el JSON de la network **no tuvo ningún efecto** en varios intentos (mismo error `Exceeded maximum fee cost for transfer operation` incluso con un tope absurdamente alto). La causa real: el daemon en background de `wdk-cli` (arrancado por `wallet unlock`) **cachea la configuración de networks al arrancar** y no la relee sola. Solución: `wdk wallet lock --all` + `wdk wallet unlock --name tiendapay --ttl 0` de nuevo despues de tocar `wdk network create`/`wdk token add` — recien ahi tomó el valor nuevo.
+
+**Validado de punta a punta, con dinero real en Sepolia**:
+- [x] La cuenta inteligente (ERC-4337) tiene una **dirección distinta** a la wallet normal derivada del mismo seed (`0x8469a1A3...` vs `0x86aCC9bc...` — confirmado, no es un descuido).
+- [x] Se transfirieron 100 USD₮ desde la wallet normal a la cuenta inteligente (unico paso que sí costó ETH — el "onboarding" de fondos).
+- [x] Balance de ETH de la cuenta inteligente confirmado en **0** en todo momento.
+- [x] Cotización (`--dry-run`) y envío real (`wdk send`, y tambien `merchant gasless pay <id> --yes`) funcionaron sin ETH, con el fee cobrado en USD₮ — `txHash` real, y el balance de USD₮ del destinatario subió exactamente lo esperado.
+- [x] **`merchant gasless pay <invoice-id> [--yes]`** (`src/commands/gasless.js`, nuevo comando de producto, mismo patrón que `agent.js`): cotiza y paga una factura real de TiendaPay por esta vía, generando el mismo recibo firmado y encadenado que `pay`/`agent settle` (`receipt verify` con firma y encadenamiento OK).
 
 ## Orden sugerido
 
