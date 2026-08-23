@@ -1,14 +1,14 @@
 
-# TiendaPay — Architecture
+# CLIQ — Architecture
 
-This document describes how TiendaPay is built: the runtime it targets, the module
+This document describes how CLIQ is built: the runtime it targets, the module
 layout, the data model, and the design decisions behind each subsystem. It assumes
 the reader is technical (engineer, judge, contributor). For a non-technical overview
 see [`README.md`](README.md); for the pitch see [`deck.md`](deck.md).
 
-## 1. What TiendaPay is
+## 1. What CLIQ is
 
-TiendaPay is a self-custodial USD₮ payment terminal for small and medium
+CLIQ is a self-custodial USD₮ payment terminal for small and medium
 businesses, shipped as a single command-line application (`merchant <command>`).
 It has four cooperating subsystems:
 
@@ -46,15 +46,15 @@ flowchart TB
     C3 --> WDK
     WDK --> RPC[("EVM RPC<br/>testnet")]
 
-    C3 --> INV["src/invoices/store.js<br/>.tiendapay/invoices.json"]
+    C3 --> INV["src/invoices/store.js<br/>.cliq/invoices.json"]
     C3 --> LEDGER["src/ledger/events.js<br/>sign + chain"]
-    C4 --> LEDGERSTORE["src/ledger/store.js<br/>.tiendapay/ledger/events.json"]
+    C4 --> LEDGERSTORE["src/ledger/store.js<br/>.cliq/ledger/events.json"]
     LEDGER --> LEDGERSTORE
 
     C5 --> SWARM["src/p2p/swarm.js<br/>Hyperswarm"]
     SWARM --> MERGE["src/p2p/merge.js<br/>verify + dedupe + conflicts"]
     MERGE --> LEDGERSTORE
-    SWARM <-->|DHT| PEER[("other TiendaPay<br/>terminal")]
+    SWARM <-->|DHT| PEER[("other CLIQ<br/>terminal")]
 
     C6 --> CTX["src/ai/context.js<br/>ledger + invoices as text"]
     C6 --> QVAC["src/ai/qvac.js<br/>QVAC SDK, local LLM"]
@@ -74,7 +74,7 @@ flowchart TB
 | P2P transport | [`hyperswarm`](https://www.npmjs.com/package/hyperswarm) | DHT-based peer discovery and encrypted connections, same stack Pear itself is built on |
 | Signing / hashing | [`hypercore-crypto`](https://www.npmjs.com/package/hypercore-crypto) | Ed25519 keypairs, sign/verify, and a deterministic hash function reused for both the merchant identity and the ledger hash chain |
 | Local AI | [`@qvac/sdk`](https://www.npmjs.com/package/@qvac/sdk) | Fully local LLM inference (llama.cpp-based), no data leaves the device |
-| Storage | Flat JSON files under `.tiendapay/` | No database dependency; every file is human-inspectable and git-ignorable |
+| Storage | Flat JSON files under `.cliq/` | No database dependency; every file is human-inspectable and git-ignorable |
 
 ## 4. Module layout
 
@@ -87,11 +87,11 @@ src/
   payments/
     wdk.js                 WDK setup (seed phrase, RPC), address/balance/quote/transfer
   invoices/
-    store.js                CRUD over .tiendapay/invoices.json
+    store.js                CRUD over .cliq/invoices.json
   ledger/
     canonical.js            Deterministic JSON serialization (sorted keys) for signing
     events.js                Create + verify signed ledger events, per-merchant hash chain
-    store.js                  Append-only read/write over .tiendapay/ledger/events.json
+    store.js                  Append-only read/write over .cliq/ledger/events.json
   p2p/
     protocol.js              Newline-delimited JSON framing over a raw socket
     merge.js                  Verify, dedupe, and flag conflicts in events received from peers
@@ -196,7 +196,7 @@ produces a signed receipt.
 ## 7. P2P sync design
 
 `merchant sync --room <name>` and `merchant peers --room <name>` both use
-Hyperswarm, joining a topic derived from `sha256("tiendapay:ledger:<room>")`
+Hyperswarm, joining a topic derived from `sha256("cliq:ledger:<room>")`
 (via `hypercore-crypto`'s hash function — any two terminals using the same
 room name converge on the same topic and can discover each other on the DHT).
 
@@ -204,7 +204,7 @@ room name converge on the same topic and can discover each other on the DHT).
 canonical way to do multi-writer P2P sync in the Holepunch ecosystem is: each
 peer keeps its own Hypercore (an append-only log with a public key), and peers
 replicate each other's Hypercores via `corestore` once they've exchanged
-public keys. TiendaPay does not do this. Instead, on every new connection each
+public keys. CLIQ does not do this. Instead, on every new connection each
 side sends its **entire local ledger** as a single newline-delimited JSON
 message (`src/p2p/protocol.js`), and the receiving side runs every incoming
 event through `src/p2p/merge.js`:
@@ -239,7 +239,7 @@ reachability.
 
 `WalletAccountEvm.transfer()` (WDK) returns as soon as
 `eth_sendRawTransaction` accepts the transaction — it does not wait for a
-block confirmation. TiendaPay mirrors that honestly: an invoice becomes
+block confirmation. CLIQ mirrors that honestly: an invoice becomes
 `submitted` the instant WDK returns a hash, and the ledger event records that
 same unconfirmed `txHash`. There is intentionally no `confirmed` state yet.
 Adding one would mean polling `getTransactionReceipt` (or a similar call) and
@@ -261,7 +261,7 @@ instead of staying theoretical. Full transcripts and exact commands are in
   create`, and `pay --yes` were run against the live RPC end to end. The
   resulting `txHash` is real and is persisted in both the invoice and the
   signed ledger receipt.
-- **P2P sync** — two independent merchant identities (two separate `.tiendapay`
+- **P2P sync** — two independent merchant identities (two separate `.cliq`
   stores) ran `sync --room` concurrently on the same host and genuinely
   discovered each other over the DHT, exchanged ledger events, and correctly
   flagged a deliberately induced conflict (same `invoiceId`, two different
@@ -291,7 +291,7 @@ without a timeout).
 ## 10. Security model summary
 
 - **Self-custody.** The payment wallet is derived from `MERCHANT_SEED_PHRASE`
-  (never transmitted anywhere); TiendaPay cannot move funds on the merchant's
+  (never transmitted anywhere); CLIQ cannot move funds on the merchant's
   behalf outside of an explicit `pay --yes`.
 - **Two independent keys, two independent purposes.** The P2P/ledger identity
   (Ed25519, from `merchant init`) and the payment wallet (EVM, from WDK) are
@@ -300,13 +300,13 @@ without a timeout).
   altering a stored event after the fact is detectable by anyone with the
   merchant's public key (already embedded in the event) — see §5.2.
 - **No custodial server.** There is no backend that holds funds, private
-  keys, or the canonical copy of a merchant's sales history. `.tiendapay/`
+  keys, or the canonical copy of a merchant's sales history. `.cliq/`
   (keys) and `.env` (seed phrase) never leave the device and are excluded
   from version control.
 
 ## 11. `pear-cli/`: standalone installable binary (Pear Track submission)
 
-TiendaPay-the-app runs on `bare` and is distributed as source (`pear
+CLIQ-the-app runs on `bare` and is distributed as source (`pear
 stage`/`pear seed`, fetched with `pear dump`) — that's what §9 above
 validates. The Pear Track brief asks for something stricter: a tool
 installable with a single `pear install pear://<key>`, with no `bare`/`pear`/
@@ -322,7 +322,7 @@ is the right shape for a one-shot CLI (`invoice create`, `pay ...`) rather
 than a long-lived TUI/service (that's what `main`/`variant/single-thread` are
 for). `bin.mjs`/`app.js` (the updater wiring: `pear-runtime` +
 `pear-runtime-updater` + `bare-daemon`) are kept as-is from the template;
-`src/` is the same TiendaPay command set copied in verbatim, minus `ai/` and
+`src/` is the same CLIQ command set copied in verbatim, minus `ai/` and
 the `ask` command (see below).
 
 **Why `ask`/QVAC is excluded from this build specifically.** `@qvac/sdk`
@@ -330,7 +330,7 @@ pulls in native addon prebuilds for every platform (~6GB). That's an
 acceptable cost for `npm install` on a dev machine, but it's the single
 biggest risk to `bare-build` (the standalone-binary compiler) either failing
 or producing an unreasonably large binary under a hackathon deadline. Every
-other TiendaPay command is included.
+other CLIQ command is included.
 
 **Build.** `bare-build` (via `bare-pack`, a static bundler) compiles
 `bin.mjs` + everything it transitively `require`s into one self-contained
@@ -367,8 +367,8 @@ transcript in `TESTING.md` §8 and `pear-cli/README.md`):
    chance to connect, which looked exactly like "can't find peers on this
    network" but was actually "never had time to try."
 2. `bin.mjs` built the on-drive path to search for using `pkg.productName`
-   ("tiendapay"), while `pear install` builds it from `pkg.name`
-   ("tiendapay-cli") — a real mismatch, not a timing issue, that made the
+   ("cliq"), while `pear install` builds it from `pkg.name`
+   ("cliq-cli") — a real mismatch, not a timing issue, that made the
    updater throw `Error: update not found` every time. Fixed by using
    `pkg.name` consistently in both places.
 
@@ -387,7 +387,7 @@ settle <invoice-id>`) is that building block: it imports the *same*
 `MERCHANT_SEED_PHRASE` into `wdk-cli`'s own wallet store (verified identical
 addresses at both index 0 and 1 via `wdk get address`), then shells out to
 `wdk send`/`wdk get` (via `bare-subprocess`, since `wdk-cli` is a Node binary
-and TiendaPay's commands run under Bare) for the actual transfer.
+and CLIQ's commands run under Bare) for the actual transfer.
 
 The reason this exists as a distinct command rather than a flag on `pay.js`:
 `pay.js` is meant to be run by a human at a terminal, and there is no
@@ -434,13 +434,13 @@ no effect until the daemon is restarted (`wallet lock --all` then
 The result: a real transfer where the smart account held zero ETH at every
 point before, during, and after the transaction, and the same signed-ledger
 receipt (`ledger/events.js`, `invoice_paid`) as every other payment path in
-TiendaPay — the merchant-facing invoice/receipt model doesn't change based
+CLIQ — the merchant-facing invoice/receipt model doesn't change based
 on which module actually moved the money.
 
 ## 14. `reconcile.js`: QVAC Track 1 (OCR + LLM receipt reconciliation)
 
 A separate track from the same sponsor, brief's flagship use case is invoice
-reconciliation via OCR — which maps directly onto TiendaPay's existing
+reconciliation via OCR — which maps directly onto CLIQ's existing
 invoice domain instead of needing a new one invented for the prize.
 `src/ai/qvac.js` gained two functions alongside the `ask` completion helper
 it already had: `ocrImage(imagePath)` (loads `OCR_LATIN`, an EasyOCR model

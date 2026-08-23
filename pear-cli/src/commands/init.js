@@ -6,7 +6,7 @@ const { dataDir } = require('../util/paths.js')
 async function run (args) {
   if (config.exists()) {
     console.log(`Ya inicializado en ${dataDir()}`)
-    console.log('Usa el archivo .tiendapay/config.json existente, o elimina la carpeta para reiniciar.')
+    console.log('Usa el archivo .cliq/config.json existente, o elimina la carpeta para reiniciar.')
     return
   }
 
@@ -22,7 +22,7 @@ async function run (args) {
     createdAt: new Date().toISOString()
   })
 
-  console.log('TiendaPay inicializado')
+  console.log('CLIQ inicializado')
   console.log(`Red: ${network}`)
   console.log(`Identidad P2P: ${identity.publicKey.toString('hex')}`)
   console.log(`Almacen local: ${dataDir()}`)

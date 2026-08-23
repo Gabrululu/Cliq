@@ -119,7 +119,7 @@ async function settle (args) {
     result = runWdk(wdkArgs)
   } catch (err) {
     return fail(
-      `No se pudo ejecutar wdk-cli: ${err.message}. Verifica que el wallet "tiendapay" este importado y desbloqueado ("wdk wallet unlock --name tiendapay --ttl 0").`
+      `No se pudo ejecutar wdk-cli: ${err.message}. Verifica que el wallet "cliq" este importado y desbloqueado ("wdk wallet unlock --name cliq --ttl 0").`
     )
   }
 

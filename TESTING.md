@@ -1,14 +1,12 @@
 # Pendientes de validación con red real
 
-El proyecto vive comprimido en `tiendapaychanges.zip` (aún no descomprimido en este repo). Antes de descomprimir/instalar, confirmar si hace falta liberar espacio en disco para `@qvac/sdk` (~6GB) o si migramos a `@qvac/bare-sdk`.
-
 Este checklist junta todo lo que quedó marcado como "no probado por la red del sandbox" a lo largo de las 7 fases. Usar `pnpm` en vez de `npm` salvo donde se indique lo contrario (herramientas globales `bare`/`pear` y comandos `bare`/`pear` en sí).
 
 ## 1. Instalación limpia (nunca se hizo desde cero en otra máquina)
 
 ```
 git clone <tu-repo>
-cd TiendaPay
+cd CLIQ
 pnpm add -g bare pear   # herramientas globales, no vienen en package.json
 pnpm install
 bare index.js help
@@ -47,7 +45,7 @@ bare index.js sync --room demo
 bare index.js sync --room demo
 ```
 
-- [x] Ambos terminales se descubren entre sí (no solo que el comando termina sin colgarse, eso ya está probado). (2026-08-23: probado con dos identidades independientes — dos carpetas (`/tmp/tp-peer-a`, `/tmp/tp-peer-b`), cada una con su propio `.tiendapay` vía `merchant init` — corriendo `sync --room demo` en simultáneo en el mismo host. **Con `--timeout 25000` no se descubrieron (0 peers)**; con **`--timeout 60000` sí** — "Peer conectado" en ambos lados. Este entorno reporta `firewalled true` / `NAT type consistent` en el DHT (visto en logs de `pear`/`pear seed`), lo que probablemente explica que el hole-punching tarde más de lo esperado. Recomendación: si en producción los comercios están detrás de NATs restrictivas, contemplar un timeout mayor a los 20s por defecto del comando `sync`, o reintentos).
+- [x] Ambos terminales se descubren entre sí (no solo que el comando termina sin colgarse, eso ya está probado). (2026-08-23: probado con dos identidades independientes — dos carpetas (`/tmp/tp-peer-a`, `/tmp/tp-peer-b`), cada una con su propio `.cliq` vía `merchant init` — corriendo `sync --room demo` en simultáneo en el mismo host. **Con `--timeout 25000` no se descubrieron (0 peers)**; con **`--timeout 60000` sí** — "Peer conectado" en ambos lados. Este entorno reporta `firewalled true` / `NAT type consistent` en el DHT (visto en logs de `pear`/`pear seed`), lo que probablemente explica que el hole-punching tarde más de lo esperado. Recomendación: si en producción los comercios están detrás de NATs restrictivas, contemplar un timeout mayor a los 20s por defecto del comando `sync`, o reintentos).
 - [x] Los eventos de un lado aparecen en el ledger del otro. (2026-08-23: cada peer creó un evento `invoice_paid` único —`inv_a_only` en A, `inv_b_only` en B— directamente vía `ledger.createEvent` (sin pasar por pago real, para aislar la prueba de sync/merge de la de WDK ya cubierta en #2). Tras el `sync`, ambos ledgers quedaron con los 4 recibos: los 2 propios + los 2 del otro comercio, verificado con `merchant ledger` en ambos lados).
 - [x] Provocar un conflicto a propósito (misma `invoiceId`, dos `txHash` distintos desde comercios distintos) y confirmar que `sync` lo reporta en vez de pisarlo silenciosamente. (2026-08-23: ambos peers crearon un evento con `invoiceId: inv_conflict_test` pero `txHash` distinto. Tras el sync, **ambos lados reportaron el conflicto correctamente** en la sección "Conflictos detectados" con los dos `receipt_id`/`txHash`/comercio enfrentados, y ninguno de los dos eventos se sobreescribió — los dos quedaron guardados en el ledger de ambos peers).
 
@@ -85,15 +83,15 @@ Chequeo de seguridad importante:
 pear info --manifest
 ```
 
-`pear.stage.ignore` ya está configurado para excluir `.env` y `.tiendapay/`, pero nunca se ejecutó este comando para confirmarlo.
+`pear.stage.ignore` ya está configurado para excluir `.env` y `.cliq/`, pero nunca se ejecutó este comando para confirmarlo.
 
 - [x] `pear --version` bootstrapea correctamente. (2026-08-23: se instaló solo con `pnpm add -g pear`, primer `pear -v` dispara un bootstrap propio de Holepunch. Ojo: el flag correcto en esta versión (v3.2.0) es `-v`, no `--version`).
-- [x] `pear stage dev` + `pear run pear://...` funciona desde otra carpeta/máquina. (2026-08-23: **el CLI de Pear cambió dos veces respecto al checklist original**: (1) `pear stage dev` ya no acepta nombres de canal, pide un `<link>` generado con `pear touch`; (2) **`pear run` fue eliminado** — el CLI devuelve "pear run has been removed. Use the pear-runtime module instead". El equivalente que sí funciona para bajar+correr la app como otro peer es `pear dump <link> <dir>` seguido de `bare index.js help` desde esa carpeta — probado en `/tmp/pear-run-test` (otra carpeta, mismo host) y funcionó: trajo `src/`, `node_modules/`, etc., sin `.env` ni `.tiendapay/`, y el CLI corrió normal. Link final: `pear://dtb98ajx6wkg8cbw9zmpabd95ie4ipkj5dq18da3frk6o34ixczo`. Nota: fue en la misma máquina, no se probó cruzando dos hosts físicos distintos — si el proyecto sigue orientándose a apps de escritorio, revisar si conviene usar `pear install` en vez de `dump` para ese caso).
+- [x] `pear stage dev` + `pear run pear://...` funciona desde otra carpeta/máquina. (2026-08-23: **el CLI de Pear cambió dos veces respecto al checklist original**: (1) `pear stage dev` ya no acepta nombres de canal, pide un `<link>` generado con `pear touch`; (2) **`pear run` fue eliminado** — el CLI devuelve "pear run has been removed. Use the pear-runtime module instead". El equivalente que sí funciona para bajar+correr la app como otro peer es `pear dump <link> <dir>` seguido de `bare index.js help` desde esa carpeta — probado en `/tmp/pear-run-test` (otra carpeta, mismo host) y funcionó: trajo `src/`, `node_modules/`, etc., sin `.env` ni `.cliq/`, y el CLI corrió normal. Link final: `pear://dtb98ajx6wkg8cbw9zmpabd95ie4ipkj5dq18da3frk6o34ixczo`. Nota: fue en la misma máquina, no se probó cruzando dos hosts físicos distintos — si el proyecto sigue orientándose a apps de escritorio, revisar si conviene usar `pear install` en vez de `dump` para ese caso).
 - [~] Flujo `stage` → `release` → `seed` en producción funciona. (2026-08-23: **`pear release` fue eliminado por completo** en esta versión — `Unrecognized Argument`. El modelo de "canal de producción" del checklist original ya no existe así de simple: ahora "producción" se maneja con `pear provision <source-verlink> <target-link> <production-verlink>` + `pear multisig` (firma criptográfica por quorum, requiere configurar `multisig.publicKeys` / `namespace` / `quorum` en `pear.json`, que este proyecto no tiene). Es un cambio de flujo, no solo de sintaxis — requiere decisión de producto sobre si vale la pena montar multisig para este proyecto o si alcanza con seed/dump directo sobre un link único. `pear seed <link>` en sí sí funciona tal cual (probado, ver abajo) — lo que no existe es el paso intermedio de "release").
 - [x] Un cambio chico se propaga vía OTA a un peer que ya había instalado. (2026-08-23: se bumpeó `package.json` version 0.0.1→0.0.2, se re-stageó el mismo link con `pear stage <link> --only package.json` — pasó de versión interna 8498→8499 —, y desde la carpeta peer (`/tmp/pear-run-test`, que ya tenía la app) se corrió `pear dump <link> . --force`: solo resincronizó `/package.json` y el peer terminó con `0.0.2`. Se revirtió el version bump después de la prueba).
 
 **`pear seed` (probado por separado):** `pear seed pear://dtb98ajx6wkg8cbw9zmpabd95ie4ipkj5dq18da3frk6o34ixczo --no-tty` corre, anuncia el link en la red y queda sirviendo bloques ("0 peers" porque no había otro nodo real conectándose, pero el anuncio y el logging de `whoami`/`discovery key`/etc. funcionaron sin errores).
-- [x] `pear info --manifest` NO lista `.env` ni `.tiendapay/`. (2026-08-23: confirmado — el manifiesto solo repite la config `pear.stage.ignore` de `package.json`; en el diff del stage no aparecieron esos archivos, solo `.env.example`).
+- [x] `pear info --manifest` NO lista `.env` ni `.cliq/`. (2026-08-23: confirmado — el manifiesto solo repite la config `pear.stage.ignore` de `package.json`; en el diff del stage no aparecieron esos archivos, solo `.env.example`).
 
 **Nota sobre disco:** el `pear stage` de este proyecto sube `node_modules/` completo (incluidos los prebuilds nativos de `@qvac` para todas las plataformas) porque Pear empaqueta las dependencias para distribuir la app corriendo, no solo el código fuente. Esto hizo crecer el store interno de Pear (`~/.config/pear`) en ~3.4GB adicionales durante el staging. Disco libre bajó de 15GB (post `pnpm install`) a **7.6GB** tras este único `stage`. Si se van a hacer varios ciclos de `stage`/`release`/`seed`, conviene monitorear el disco o evaluar migrar a `@qvac/bare-sdk` antes de seguir.
 
@@ -116,7 +114,7 @@ pear info --manifest
    {
      "multisig": {
        "publicKeys": ["<pubkey1>", "<pubkey2>", "<pubkey3>"],
-       "namespace": "tiendapay",
+       "namespace": "cliq",
        "quorum": 2
      }
    }
@@ -141,14 +139,14 @@ Ninguno de estos comandos se ejecutó en la práctica (solo se revisó su `--hel
 
 Track separado del hackathon con su propio brief: "Build a standalone CLI tool, deploy it with the Pear CLI, and make it installable with `pear install`, with peer-to-peer OTA updates", arrancando desde el boilerplate oficial `hello-pear-bare`. Vive en [`pear-cli/`](pear-cli/) (subcarpeta de este mismo repo) — detalle completo en [`pear-cli/README.md`](pear-cli/README.md). Esto es una entrega distinta a la sección 5 (que probaba el `stage`/`seed`/`dump` de la app "normal" corriendo con `bare`); acá el requisito duro es un **binario standalone real**, instalable sin Node/Bare/Pear.
 
-- [x] Arranca desde `hello-pear-bare` rama `variant/daemon` (pensada para comandos cortos tipo git — el patrón real de uso de TiendaPay), con el CLI real portado (todo menos `ask`/QVAC, excluido por el peso de `@qvac/sdk`).
+- [x] Arranca desde `hello-pear-bare` rama `variant/daemon` (pensada para comandos cortos tipo git — el patrón real de uso de CLIQ), con el CLI real portado (todo menos `ask`/QVAC, excluido por el peso de `@qvac/sdk`).
 - [x] `bare-build` genera un binario standalone linux-x64 (~119MB) que corre sin ningún `node_modules` al lado — probado en una carpeta vacía.
 - [x] `pear install pear://<key>` instala de verdad, vía P2P real (con un `pear seed` corriendo), directo a `~/.local/bin/`. (2026-08-23: confirmado con `pear install` descargando a ~45MB/s desde el propio seed).
 - [x] **OTA real**: con una copia instalada en `0.0.4`, se stageó `0.0.5` en el mismo link, y la copia instalada se actualizó **sola** en ~2 segundos (`updating → updating-delta → updated → update-applied`, log real en `pear-cli/README.md`). Confirmado corriendo `--version` antes y después.
 
 **Dos bugs reales encontrados y arreglados en el camino** (documentados con más detalle en `pear-cli/README.md`):
 1. `--update-window` es en **milisegundos**, no segundos — pasarle `90`/`180` (interpretados como 90-180ms) hacía que el updater se cerrara antes de que el swarm llegara a conectar con nada, pareciendo "no encuentra peers" cuando en realidad nunca tuvo tiempo de intentarlo.
-2. `bin.mjs` armaba el nombre del binario a buscar con `pkg.productName` ("tiendapay"), pero `pear install` arma esa ruta con `pkg.name` ("tiendapay-cli") — mismatch que tiraba `Error: update not found`. Se corrigió usando `pkg.name` consistentemente.
+2. `bin.mjs` armaba el nombre del binario a buscar con `pkg.productName` ("cliq"), pero `pear install` arma esa ruta con `pkg.name` ("cliq-cli") — mismatch que tiraba `Error: update not found`. Se corrigió usando `pkg.name` consistentemente.
 
 **Pendiente / limitaciones conocidas:**
 - Solo se buildeó **linux-x64** — este entorno no tiene los SDKs de macOS/Windows para cross-compilar con `bare-build`.
@@ -159,7 +157,7 @@ Track separado del hackathon con su propio brief: "Build a standalone CLI tool, 
 
 Track separado, mismo sponsor que Pears. Regla del brief: "Pick one prize track and go deep" — se arrancó por **Track 1 (CLI + MCP, $1000)** porque no dependía de ningún servicio externo nuevo. Track 2 (gasless) se retomó despues y tambien quedo resuelto — ver seccion 10.
 
-**Qué se construyó**: `merchant agent settle <invoice-id> [--yes] [--json]` (`src/commands/agent.js`) — un comando nuevo que paga una factura de TiendaPay usando `@tetherto/wdk-cli` (no el SDK crudo `@tetherto/wdk` que ya usa `pay.js` — es una pieza nueva y central, no un wrapper decorativo), con guardrails **en código, no en un prompt**:
+**Qué se construyó**: `merchant agent settle <invoice-id> [--yes] [--json]` (`src/commands/agent.js`) — un comando nuevo que paga una factura de CLIQ usando `@tetherto/wdk-cli` (no el SDK crudo `@tetherto/wdk` que ya usa `pay.js` — es una pieza nueva y central, no un wrapper decorativo), con guardrails **en código, no en un prompt**:
 1. Tope de gasto (`AGENT_SPEND_CAP_USDT`) — rechazado antes de llamar a `wdk send` si la factura lo supera.
 2. Allowlist implícita — el destinatario es siempre `invoice.recipient`, nunca un parámetro libre.
 3. Confirmación explícita — sin `--yes` solo cotiza (`wdk send --dry-run`), igual patrón que `pay <id>`/`pay <id> --yes`.
@@ -187,18 +185,18 @@ Expuesto a un agente vía un servidor MCP propio (`mcp/server.js`, Node.js — n
 - La dirección del contrato paymaster **no es un valor fijo** — se obtiene con una llamada real a `pimlico_getTokenQuotes` (params: `[{tokens:[...]}, entryPointAddress, chainIdHex]`), que devolvió `0x777777777777AeC03fd955926DbF81597e66834C` para el USD₮ oficial en Sepolia.
 - Se creó una network custom en `wdk-cli` (`wdk network create`) llamada `smart-account-sepolia-pimlico`, módulo `@tetherto/wdk-wallet-evm-erc-4337`, con esos valores — ver el JSON completo en el README, sección WDK Track 2.
 
-**Bug real encontrado**: subir `transferMaxFee` en el JSON de la network **no tuvo ningún efecto** en varios intentos (mismo error `Exceeded maximum fee cost for transfer operation` incluso con un tope absurdamente alto). La causa real: el daemon en background de `wdk-cli` (arrancado por `wallet unlock`) **cachea la configuración de networks al arrancar** y no la relee sola. Solución: `wdk wallet lock --all` + `wdk wallet unlock --name tiendapay --ttl 0` de nuevo despues de tocar `wdk network create`/`wdk token add` — recien ahi tomó el valor nuevo.
+**Bug real encontrado**: subir `transferMaxFee` en el JSON de la network **no tuvo ningún efecto** en varios intentos (mismo error `Exceeded maximum fee cost for transfer operation` incluso con un tope absurdamente alto). La causa real: el daemon en background de `wdk-cli` (arrancado por `wallet unlock`) **cachea la configuración de networks al arrancar** y no la relee sola. Solución: `wdk wallet lock --all` + `wdk wallet unlock --name cliq --ttl 0` de nuevo despues de tocar `wdk network create`/`wdk token add` — recien ahi tomó el valor nuevo.
 
 **Validado de punta a punta, con dinero real en Sepolia**:
 - [x] La cuenta inteligente (ERC-4337) tiene una **dirección distinta** a la wallet normal derivada del mismo seed (`0x8469a1A3...` vs `0x86aCC9bc...` — confirmado, no es un descuido).
 - [x] Se transfirieron 100 USD₮ desde la wallet normal a la cuenta inteligente (unico paso que sí costó ETH — el "onboarding" de fondos).
 - [x] Balance de ETH de la cuenta inteligente confirmado en **0** en todo momento.
 - [x] Cotización (`--dry-run`) y envío real (`wdk send`, y tambien `merchant gasless pay <id> --yes`) funcionaron sin ETH, con el fee cobrado en USD₮ — `txHash` real, y el balance de USD₮ del destinatario subió exactamente lo esperado.
-- [x] **`merchant gasless pay <invoice-id> [--yes]`** (`src/commands/gasless.js`, nuevo comando de producto, mismo patrón que `agent.js`): cotiza y paga una factura real de TiendaPay por esta vía, generando el mismo recibo firmado y encadenado que `pay`/`agent settle` (`receipt verify` con firma y encadenamiento OK).
+- [x] **`merchant gasless pay <invoice-id> [--yes]`** (`src/commands/gasless.js`, nuevo comando de producto, mismo patrón que `agent.js`): cotiza y paga una factura real de CLIQ por esta vía, generando el mismo recibo firmado y encadenado que `pay`/`agent settle` (`receipt verify` con firma y encadenamiento OK).
 
 ## 11. QVAC Track (Tether) — Track 1: reconciliación de comprobantes (OCR + LLM local)
 
-Track separado de WDK/Pears, mismo sponsor. Brief: "Local agents that replace operations work", caso insignia explícito: reconciliación de facturas via OCR. Se construyó `merchant reconcile <invoice-id> <ruta-imagen> [--json]` sobre el dominio real de TiendaPay (facturas), no como demo aislada.
+Track separado de WDK/Pears, mismo sponsor. Brief: "Local agents that replace operations work", caso insignia explícito: reconciliación de facturas via OCR. Se construyó `merchant reconcile <invoice-id> <ruta-imagen> [--json]` sobre el dominio real de CLIQ (facturas), no como demo aislada.
 
 **Qué se construyó**: `src/ai/qvac.js` ganó dos funciones nuevas sobre el mismo runtime QVAC que ya usaba `ask` — `ocrImage(imagePath)` (carga `OCR_LATIN`/EasyOCR vía el nuevo addon `@qvac/ocr-ggml`, corre `sdk.ocr(...)`) y `reconcileReceipt(invoice, ocrText)` (carga el mismo `LLAMA_3_2_1B_INST_Q4_0` de `ask`, le pide que extraiga el monto del texto OCR y compare contra la factura). `src/commands/reconcile.js` encadena ambos pasos y nunca cambia el estado de la factura — es una lectura asistida para que decida un humano.
 

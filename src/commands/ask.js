@@ -25,7 +25,7 @@ async function run (args) {
     })
   } catch (err) {
     console.error(`QVAC no disponible: ${err.message}`)
-    console.error('El resto de TiendaPay funciona igual sin QVAC. Datos crudos que se le hubieran pasado al modelo:')
+    console.error('El resto de CLIQ funciona igual sin QVAC. Datos crudos que se le hubieran pasado al modelo:')
     console.error('')
     console.error(context)
     Bare.exit(1)

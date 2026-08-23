@@ -1,7 +1,7 @@
 const pkg = require('../../package.json')
 
 async function run () {
-  console.log(`TiendaPay v${pkg.version}`)
+  console.log(`CLIQ v${pkg.version}`)
 }
 
 module.exports = { run }

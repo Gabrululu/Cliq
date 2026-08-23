@@ -12,7 +12,7 @@ const DEFAULT_FROM_INDEX = 1
 
 const USAGE = 'Uso: merchant gasless pay <invoice-id> [--yes]'
 
-// WDK Track, Track 2 (gasless): paga una factura de TiendaPay sin que quien
+// WDK Track, Track 2 (gasless): paga una factura de CLIQ sin que quien
 // paga necesite tener ETH — el fee de red se cobra en USD₮ via el modulo
 // @tetherto/wdk-wallet-evm-erc-4337 (cuenta inteligente ERC-4337) y el
 // paymaster de Pimlico. Esto es justo el problema que resuelve el track:

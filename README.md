@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/assets/logo-lockup.svg" alt="TiendaPay" width="320">
+  <img src="public/assets/logo-lockup.svg" alt="CLIQ" width="320">
 </p>
 
-# TiendaPay
+# CLIQ
 
 Terminal de pagos USD₮ autocustodial para comercios en general, distribuida como CLI P2P mediante Pear, con libro mayor firmado y sincronizado por Hyperswarm, y consultas locales con QVAC.
 
@@ -30,7 +30,7 @@ Proyecto para [Aleph Hackathon 2026](https://hacki.crecimiento.build/h/aleph-hac
 
 <p align="center">
   <a href="public/index.html">
-    <img src="public/assets/landing-preview.png" alt="Vista previa de la landing page de TiendaPay" width="640">
+    <img src="public/assets/landing-preview.png" alt="Vista previa de la landing page de CLIQ" width="640">
   </a>
 </p>
 
@@ -43,7 +43,7 @@ xdg-open public/index.html              # Linux
 npx serve public
 ```
 
-Es un archivo HTML autocontenido (sin build, sin dependencias del proyecto) pensado para explicar TiendaPay a un comerciante, no a un desarrollador. La marca (`public/assets/logo-mark.svg`, `logo-mark-dark.svg`, `logo-lockup.svg`) representa un sello de recibo firmado con el simbolo de USD₮, usando la misma paleta de colores que el resto de la pagina.
+Es un archivo HTML autocontenido (sin build, sin dependencias del proyecto) pensado para explicar CLIQ a un comerciante, no a un desarrollador. La marca (`public/assets/logo-mark.svg`, `logo-mark-dark.svg`, `logo-lockup.svg`) representa un sello de recibo firmado con el simbolo de USD₮, usando la misma paleta de colores que el resto de la pagina.
 
 ## Problema
 
@@ -134,11 +134,11 @@ bare index.js pay inv_xxxxxxxxxxxx --yes
 # (por defecto 1, para simular un "cliente" distinto del comercio con la misma seed).
 ```
 
-Las facturas se guardan en `.tiendapay/invoices.json`. Estados posibles: `pending` -> `submitted` (transaccion transmitida, con `txHash`) o `failed` (con el error). `pay` nunca marca una factura como pagada sin que WDK haya devuelto un hash de transaccion real; si la red falla, la factura queda `pending`/`failed`, nunca `submitted`.
+Las facturas se guardan en `.cliq/invoices.json`. Estados posibles: `pending` -> `submitted` (transaccion transmitida, con `txHash`) o `failed` (con el error). `pay` nunca marca una factura como pagada sin que WDK haya devuelto un hash de transaccion real; si la red falla, la factura queda `pending`/`failed`, nunca `submitted`.
 
 ### Libro mayor firmado (Fase 4)
 
-Cada `pay --yes` exitoso agrega un evento `invoice_paid` firmado a `.tiendapay/ledger/events.json`, encadenado con el evento anterior (como un mini blockchain local, append-only):
+Cada `pay --yes` exitoso agrega un evento `invoice_paid` firmado a `.cliq/ledger/events.json`, encadenado con el evento anterior (como un mini blockchain local, append-only):
 
 ```bash
 bare index.js ledger                        # Lista todos los eventos
@@ -160,20 +160,20 @@ Probe ambos casos manualmente: cadena valida de dos eventos, y luego edite a man
 # Terminal A
 bare index.js sync --room tienda-demo
 
-# Terminal B (otra carpeta/otro .tiendapay, red de prueba compartida)
+# Terminal B (otra carpeta/otro .cliq, red de prueba compartida)
 bare index.js sync --room tienda-demo
 
 # Solo descubrir quien esta en la sala, sin intercambiar eventos:
 bare index.js peers --room tienda-demo
 ```
 
-`sync` se une a una sala P2P via Hyperswarm (topic = hash de `tiendapay:ledger:<room>`, DHT publica). Al conectar con cada peer, ambos lados se mandan su libro mayor local completo como un mensaje JSON; cada evento recibido se verifica (firma + encadenamiento por comercio) antes de aceptarse, se ignoran los duplicados por `id`, y al final se listan los conflictos: mismo `invoiceId` con `txHash` distintos entre eventos de distintos comercios (posible doble registro), marcados para revision manual en vez de resolverse automaticamente.
+`sync` se une a una sala P2P via Hyperswarm (topic = hash de `cliq:ledger:<room>`, DHT publica). Al conectar con cada peer, ambos lados se mandan su libro mayor local completo como un mensaje JSON; cada evento recibido se verifica (firma + encadenamiento por comercio) antes de aceptarse, se ignoran los duplicados por `id`, y al final se listan los conflictos: mismo `invoiceId` con `txHash` distintos entre eventos de distintos comercios (posible doble registro), marcados para revision manual en vez de resolverse automaticamente.
 
 **Simplificacion de diseño respecto al plan original:** en vez de que cada terminal tenga su propio Hypercore (feed append-only) y replicarlos entre si por clave publica (el patron estandar de Hypercore/corestore para multi-writer), implemente un intercambio directo de los eventos ya firmados (JSON delimitado por saltos de linea) sobre la conexion cifrada de Hyperswarm. La propiedad de seguridad que importa (que nadie pueda falsificar o alterar un evento) ya la da la firma Ed25519 de la Fase 4, que es independiente del transporte — un protocolo mas simple no resigna nada de eso. El resultado es mas facil de auditar y cubre el objetivo central de la Fase 5 ("replicacion de eventos, no sincronizacion de wallets"), y ya se probo funcionando de punta a punta contra la DHT real (ver arriba). Migrar a Hypercore+corestore por feed sigue siendo un paso valido si en algun momento hace falta el patron estandar (por ejemplo, para reproducir el historial completo de un peer nuevo en vez de solo el estado actual).
 
 **Robustez de red:** `swarm.join(...).flushed()` y `swarm.destroy()` pueden colgarse indefinidamente si no se puede alcanzar el bootstrap de la DHT (lo confirme en este sandbox: sin el fix, `merchant peers` nunca terminaba). Por eso ninguno de los dos se espera de forma bloqueante; el comando siempre termina dentro de la ventana `--timeout` mas un margen fijo de limpieza, haya o no red disponible.
 
-**Probado contra la red real:** dos identidades de comercio independientes (dos carpetas `.tiendapay` separadas) corriendo `sync --room` al mismo tiempo se descubrieron de verdad por la DHT, intercambiaron sus libros mayores, y detectaron correctamente un conflicto provocado a proposito (misma `invoiceId`, dos `txHash` distintos) en vez de pisarlo. El descubrimiento tardo ~60s, no los 20s por defecto — este entorno reporta `firewalled: true` / `NAT type: consistent` en la DHT, algo a tener en cuenta tambien en produccion, no solo aca. Detalle completo en `TESTING.md`.
+**Probado contra la red real:** dos identidades de comercio independientes (dos carpetas `.cliq` separadas) corriendo `sync --room` al mismo tiempo se descubrieron de verdad por la DHT, intercambiaron sus libros mayores, y detectaron correctamente un conflicto provocado a proposito (misma `invoiceId`, dos `txHash` distintos) en vez de pisarlo. El descubrimiento tardo ~60s, no los 20s por defecto — este entorno reporta `firewalled: true` / `NAT type: consistent` en la DHT, algo a tener en cuenta tambien en produccion, no solo aca. Detalle completo en `TESTING.md`.
 
 ### Consultas con QVAC (Fase 6)
 
@@ -182,7 +182,7 @@ bare index.js ask "que facturas estan pendientes?"
 bare index.js ask "cuanto vendi en total?"
 ```
 
-`ask` arma un contexto de texto con las facturas y el libro mayor local (`src/ai/context.js`), y se lo pasa a un modelo de lenguaje local via `@qvac/sdk` (`loadModel` + `completion`, modelo por defecto `LLAMA_3_2_1B_INST_Q4_0`, configurable con `QVAC_MODEL` en `.env`). Todo corre en la maquina, sin mandar datos a un servidor externo. QVAC es estrictamente un bonus de consulta: **si falla o no esta disponible, el resto de TiendaPay (pagos, ledger, sync) sigue funcionando igual** — `ask` nunca bloquea ni condiciona al resto de comandos.
+`ask` arma un contexto de texto con las facturas y el libro mayor local (`src/ai/context.js`), y se lo pasa a un modelo de lenguaje local via `@qvac/sdk` (`loadModel` + `completion`, modelo por defecto `LLAMA_3_2_1B_INST_Q4_0`, configurable con `QVAC_MODEL` en `.env`). Todo corre en la maquina, sin mandar datos a un servidor externo. QVAC es estrictamente un bonus de consulta: **si falla o no esta disponible, el resto de CLIQ (pagos, ledger, sync) sigue funcionando igual** — `ask` nunca bloquea ni condiciona al resto de comandos.
 
 **Probado de punta a punta contra la red real:**
 - El armado del contexto (`src/ai/context.js`) es logica pura sin red: probado end-to-end con facturas reales.
@@ -196,13 +196,13 @@ bare index.js ask "cuanto vendi en total?"
 
 ## QVAC Track (Tether) — Track 1: reconciliacion de comprobantes (OCR + LLM local)
 
-El caso de uso insignia que pide el brief de QVAC (agentes locales para trabajo de back-office: reconciliacion de facturas) mapea directo al dominio que TiendaPay ya tiene — facturas reales — asi que se construyo sobre eso, no como una demo generica aparte.
+El caso de uso insignia que pide el brief de QVAC (agentes locales para trabajo de back-office: reconciliacion de facturas) mapea directo al dominio que CLIQ ya tiene — facturas reales — asi que se construyo sobre eso, no como una demo generica aparte.
 
 ```bash
 bare index.js reconcile <invoice-id> <ruta-a-la-imagen-del-comprobante> [--json]
 ```
 
-Que hace: toma una foto/escaneo de un comprobante de pago, le corre OCR local (`@qvac/sdk` + addon `@qvac/ocr-ggml`, modelo `OCR_LATIN` de EasyOCR — detector CRAFT derivado automaticamente por el registry), y compara el texto extraido contra la factura ya registrada en TiendaPay, marcando `COINCIDE` / `NO_COINCIDE` / `INCIERTO` con una explicacion en espanol verificable en cinco segundos. No cambia el estado de la factura: es una lectura asistida para que un humano decida, no un pago automatico.
+Que hace: toma una foto/escaneo de un comprobante de pago, le corre OCR local (`@qvac/sdk` + addon `@qvac/ocr-ggml`, modelo `OCR_LATIN` de EasyOCR — detector CRAFT derivado automaticamente por el registry), y compara el texto extraido contra la factura ya registrada en CLIQ, marcando `COINCIDE` / `NO_COINCIDE` / `INCIERTO` con una explicacion en espanol verificable en cinco segundos. No cambia el estado de la factura: es una lectura asistida para que un humano decida, no un pago automatico.
 
 **Decision de diseño clave, encontrada probando esto de verdad:** en la primera corrida real, el modelo de texto (`LLAMA_3_2_1B_INST_Q4_0`, el mismo que usa `ask`) extrajo *correctamente* el monto del comprobante (`12`) pero dijo `VEREDICTO: COINCIDE` contra una factura de `5` — un modelo de 1B es bueno extrayendo texto pero malo comparando numeros. La solucion no fue "mejorar el prompt": el veredicto final **nunca sale del modelo**. `src/ai/qvac.js` (`computeVerdict`) toma el monto que el modelo extrajo y lo compara con el de la factura *en codigo*, con el mismo criterio de "el guardrail vive en codigo, no en el prompt" que ya se uso en `agent.js` (WDK Track 1). El veredicto que el modelo mismo dio se guarda aparte (`modelVerdict`) solo para poder detectar y mostrar el desacuerdo (`modelDisagreed: true`), nunca para decidir.
 
@@ -218,8 +218,8 @@ Que hace: toma una foto/escaneo de un comprobante de pago, le corre OCR local (`
 **Limitacion honesta:** las explicaciones en espanol que da el modelo a veces son gramaticalmente imprecisas o mencionan detalles menores incorrectos (ej. "el monto no es claro" en un caso donde si lo detecto bien) aunque el veredicto final (calculado en codigo, no por el modelo) sea correcto — es una limitacion conocida de un modelo de 1B generando texto libre, no del pipeline de reconciliacion en si. El veredicto es lo que importa para la decision; la explicacion es solo un resumen para que el humano la lea mas rapido, siempre acompañada del texto OCR crudo para que pueda verificar a mano.
 
 **Permalinks a donde corre la inferencia QVAC** (reemplazar `main` por el commit exacto al pushear):
-- [`src/ai/qvac.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/ai/qvac.js) — `ocrImage` (OCR) y `reconcileReceipt` + `computeVerdict` (LLM + guardrail de comparacion en codigo).
-- [`src/commands/reconcile.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/reconcile.js) — comando `merchant reconcile`.
+- [`src/ai/qvac.js`](https://github.com/Gabrululu/Cliq/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/ai/qvac.js) — `ocrImage` (OCR) y `reconcileReceipt` + `computeVerdict` (LLM + guardrail de comparacion en codigo).
+- [`src/commands/reconcile.js`](https://github.com/Gabrululu/Cliq/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/reconcile.js) — comando `merchant reconcile`.
 
 ### Configurar la wallet (WDK)
 
@@ -233,7 +233,7 @@ La wallet usa `@tetherto/wdk` + `@tetherto/wdk-wallet-evm` (modulo EVM oficial d
 
 ## Modelo de datos
 
-`merchant init` genera una identidad P2P (par de claves Ed25519) y crea un almacen local en `./.tiendapay/`. Esa identidad firma los eventos del libro mayor (`.tiendapay/ledger/events.json`), que `merchant sync` replica entre terminales via Hyperswarm. Es independiente de la wallet de pagos (WDK), que deriva sus propias cuentas desde `MERCHANT_SEED_PHRASE`.
+`merchant init` genera una identidad P2P (par de claves Ed25519) y crea un almacen local en `./.cliq/`. Esa identidad firma los eventos del libro mayor (`.cliq/ledger/events.json`), que `merchant sync` replica entre terminales via Hyperswarm. Es independiente de la wallet de pagos (WDK), que deriva sus propias cuentas desde `MERCHANT_SEED_PHRASE`.
 
 Cada evento del libro mayor sigue el modelo:
 
@@ -267,14 +267,14 @@ La serializacion es JSON canonico (claves ordenadas alfabeticamente, `src/ledger
 
 ```json
 "pear": {
-  "name": "tiendapay",
+  "name": "cliq",
   "stage": {
-    "ignore": [".env", ".tiendapay", ".git"]
+    "ignore": [".env", ".cliq", ".git"]
   }
 }
 ```
 
-`pear.stage.ignore` es importante por seguridad: `pear stage` no respeta `.gitignore`, tiene su propia lista de exclusion. Sin esto, `.env` (con la seed phrase) y `.tiendapay/` (con la clave secreta P2P) se publicarian tal cual al link de Pear, que es publico/distribuido por DHT. Se confirmo con `pear info --manifest` que ninguno de los dos aparece en lo publicado.
+`pear.stage.ignore` es importante por seguridad: `pear stage` no respeta `.gitignore`, tiene su propia lista de exclusion. Sin esto, `.env` (con la seed phrase) y `.cliq/` (con la clave secreta P2P) se publicarian tal cual al link de Pear, que es publico/distribuido por DHT. Se confirmo con `pear info --manifest` que ninguno de los dos aparece en lo publicado.
 
 ### Pasos reales (v3.2.0 del CLI de Pear)
 
@@ -310,11 +310,11 @@ cd <carpeta-destino> && bare index.js help
 
 ### CLI standalone instalable con `pear install` (Pear Track)
 
-Ademas de lo anterior (que corre TiendaPay via `bare index.js`, requiere tener `bare` instalado), hay una entrega separada en [`pear-cli/`](pear-cli/): la misma CLI compilada como **binario standalone**, instalable con un solo comando y sin necesitar Node/Bare/Pear en la maquina que instala:
+Ademas de lo anterior (que corre CLIQ via `bare index.js`, requiere tener `bare` instalado), hay una entrega separada en [`pear-cli/`](pear-cli/): la misma CLI compilada como **binario standalone**, instalable con un solo comando y sin necesitar Node/Bare/Pear en la maquina que instala:
 
 ```bash
 pear install pear://<pear-cli-key>
-tiendapay-cli --version
+cliq-cli --version
 ```
 
 Con actualizaciones OTA reales probadas de punta a punta (una copia instalada se actualizo sola en ~2 segundos tras stagear una version nueva). Detalle completo, incluidos dos bugs reales encontrados y arreglados en el proceso, en [`pear-cli/README.md`](pear-cli/README.md) y en `TESTING.md` seccion 8.
@@ -326,9 +326,9 @@ Track separado del hackathon, mismo sponsor que Pears (regla del brief: "Pick on
 **Paquetes WDK usados** (version instalada, ver `package.json`):
 - `@tetherto/wdk-cli` `1.0.0-beta.3` — el CLI/wallet local + servidor MCP nativo, pieza central de esta entrega.
 - `@modelcontextprotocol/sdk` `1.30.0` — para el servidor MCP propio con los guardrails.
-- (ya presentes desde antes) `@tetherto/wdk` `1.0.0-beta.16` + `@tetherto/wdk-wallet-evm` `1.0.0-beta.17` — la capa de pagos original de TiendaPay (`pay.js`), sin tocar.
+- (ya presentes desde antes) `@tetherto/wdk` `1.0.0-beta.16` + `@tetherto/wdk-wallet-evm` `1.0.0-beta.17` — la capa de pagos original de CLIQ (`pay.js`), sin tocar.
 
-**Que se construyo**: un comando nuevo, `merchant agent settle <invoice-id> [--yes]`, que paga facturas de TiendaPay usando `wdk-cli` (no el SDK crudo que ya usaba `pay.js`), con guardrails **en codigo**:
+**Que se construyo**: un comando nuevo, `merchant agent settle <invoice-id> [--yes]`, que paga facturas de CLIQ usando `wdk-cli` (no el SDK crudo que ya usaba `pay.js`), con guardrails **en codigo**:
 1. Tope de gasto (`AGENT_SPEND_CAP_USDT` en `.env`) — rechaza antes de tocar la red si la factura lo supera.
 2. El destinatario es siempre el de la factura — nunca un parametro libre que el agente (o quien le hable) pueda elegir.
 3. Confirmacion explicita — sin `--yes` solo cotiza via `wdk send --dry-run`.
@@ -336,21 +336,21 @@ Track separado del hackathon, mismo sponsor que Pears (regla del brief: "Pick on
 Expuesto a un agente de IA con un servidor MCP propio, [`mcp/server.js`](mcp/server.js), con dos tools: `quote_invoice_payment` y `confirm_invoice_payment` — ninguna de las dos acepta un monto o direccion libre, solo un `invoiceId`.
 
 **Permalinks a donde se usa WDK** (reemplazar `main` por el commit exacto al pushear):
-- [`src/commands/agent.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/agent.js) — llama a `wdk send`/`wdk get` vía `bare-subprocess`, con los guardrails (Track 1).
-- [`mcp/server.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/mcp/server.js) — servidor MCP que expone los dos tools (Track 1).
-- [`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/gasless.js) — pago gasless via ERC-4337 + paymaster (Track 2).
+- [`src/commands/agent.js`](https://github.com/Gabrululu/Cliq/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/agent.js) — llama a `wdk send`/`wdk get` vía `bare-subprocess`, con los guardrails (Track 1).
+- [`mcp/server.js`](https://github.com/Gabrululu/Cliq/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/mcp/server.js) — servidor MCP que expone los dos tools (Track 1).
+- [`src/commands/gasless.js`](https://github.com/Gabrululu/Cliq/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/gasless.js) — pago gasless via ERC-4337 + paymaster (Track 2).
 
 ### Setup desde un clon limpio
 
 ```bash
 npm install    # o pnpm install — instala @tetherto/wdk-cli entre otras deps
 
-# 1. Importar la MISMA seed que ya usa TiendaPay (.env) al wallet de wdk-cli
+# 1. Importar la MISMA seed que ya usa CLIQ (.env) al wallet de wdk-cli
 grep MERCHANT_SEED_PHRASE .env | cut -d= -f2- | \
-  WDK_PASSPHRASE="elegi-una-passphrase" ./node_modules/.bin/wdk wallet import --name tiendapay --seed-stdin
+  WDK_PASSPHRASE="elegi-una-passphrase" ./node_modules/.bin/wdk wallet import --name cliq --seed-stdin
 
 # 2. Desbloquear (queda un daemon en background; ttl 0 = no expira)
-WDK_PASSPHRASE="elegi-una-passphrase" ./node_modules/.bin/wdk wallet unlock --name tiendapay --ttl 0
+WDK_PASSPHRASE="elegi-una-passphrase" ./node_modules/.bin/wdk wallet unlock --name cliq --ttl 0
 
 # 3. Registrar el token USD₮ de prueba (el "usdt" built-in de wdk-cli en Sepolia
 #    apunta al contrato oficial, que no podemos mintear — ver TESTING.md #9)
@@ -373,7 +373,7 @@ bare index.js agent settle <invoice-id> --yes    # paga de verdad
 
 **Modulo usado**: `@tetherto/wdk-wallet-evm-erc-4337` (viene incluido como dependencia de `@tetherto/wdk-cli`) — cuentas inteligentes ERC-4337 con paymaster, para que quien paga no necesite tener ETH: el fee de red se cobra en USD₮.
 
-**Que se construyo**: `merchant gasless pay <invoice-id> [--yes]` ([`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/gasless.js)) — mismo patron que `agent settle` (cotiza sin `--yes`, paga de verdad con `--yes`, genera el mismo recibo firmado), pero contra una **cuenta inteligente** en vez de la wallet EVM comun. La cuenta inteligente tiene una direccion distinta a la wallet normal (confirmado: `0x8469a1A3...` vs `0x86aCC9bc...` del mismo seed) y nunca necesito ETH para pagar — el paymaster de Pimlico cobra el fee directo en USD₮.
+**Que se construyo**: `merchant gasless pay <invoice-id> [--yes]` ([`src/commands/gasless.js`](https://github.com/Gabrululu/Cliq/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/gasless.js)) — mismo patron que `agent settle` (cotiza sin `--yes`, paga de verdad con `--yes`, genera el mismo recibo firmado), pero contra una **cuenta inteligente** en vez de la wallet EVM comun. La cuenta inteligente tiene una direccion distinta a la wallet normal (confirmado: `0x8469a1A3...` vs `0x86aCC9bc...` del mismo seed) y nunca necesito ETH para pagar — el paymaster de Pimlico cobra el fee directo en USD₮.
 
 ### Setup (adicional al de Track 1)
 
@@ -423,7 +423,7 @@ curl -s -X POST -H "Content-Type: application/json" \
 # 6. IMPORTANTE: reiniciar el daemon para que tome la config nueva
 #    (wdk-cli cachea la config de networks al arrancar el daemon en background)
 ./node_modules/.bin/wdk wallet lock --all
-WDK_PASSPHRASE="..." ./node_modules/.bin/wdk wallet unlock --name tiendapay --ttl 0
+WDK_PASSPHRASE="..." ./node_modules/.bin/wdk wallet unlock --name cliq --ttl 0
 
 # 7. Probar
 bare index.js gasless pay <invoice-id>          # cotiza, sin ETH
@@ -450,7 +450,7 @@ Esta lista refleja lo que **falta de verdad**, no lo que "no se pudo probar" —
 
 ## Seguridad
 
-- `.tiendapay/` (identidad P2P) y `.env` (seed phrase de la wallet) contienen material sensible y estan excluidos de git via `.gitignore`. Nunca los commitees.
+- `.cliq/` (identidad P2P) y `.env` (seed phrase de la wallet) contienen material sensible y estan excluidos de git via `.gitignore`. Nunca los commitees.
 - `wallet generate-seed` es solo para desarrollo/testnet: nunca uses esa seed en mainnet ni la muestres en una demo grabada.
 - No se muestran seed phrases reales en la documentacion ni en las demos.
 

@@ -119,7 +119,7 @@ async function ocrImage (imagePath) {
 
 // Reconciliacion de facturas (QVAC Track 1): le pasamos al mismo modelo de
 // texto el texto OCR de un comprobante y los datos de la factura ya
-// registrada en TiendaPay, y le pedimos un veredicto en un formato fijo y
+// registrada en CLIQ, y le pedimos un veredicto en un formato fijo y
 // facil de parsear (no JSON libre: un modelo de 1B falla seguido generando
 // JSON valido). Reintenta el parseo una vez con un prompt mas estricto antes
 // de rendirse y devolver un resultado "incierto" en vez de inventar un

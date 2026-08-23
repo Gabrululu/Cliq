@@ -6,13 +6,13 @@ const { encodeMessage, createLineParser } = require('./protocol.js')
 const { mergeRemoteEvents, detectConflicts } = require('./merge.js')
 
 function topicFromRoom (room) {
-  return crypto.data(Buffer.from(`tiendapay:ledger:${room}`))
+  return crypto.data(Buffer.from(`cliq:ledger:${room}`))
 }
 
 function requireIdentity () {
   const identity = config.load()
   if (!identity) {
-    throw new Error('TiendaPay no esta inicializado. Ejecuta "merchant init" primero.')
+    throw new Error('CLIQ no esta inicializado. Ejecuta "merchant init" primero.')
   }
   return identity
 }

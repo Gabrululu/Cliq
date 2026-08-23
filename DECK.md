@@ -1,4 +1,4 @@
-# TiendaPay — Pitch Deck
+# CLIQ — Pitch Deck
 
 Slide-by-slide content for the Aleph Hackathon 2026 pitch. Written to be
 copied straight into slides — each slide lists the on-screen content, the
@@ -46,7 +46,7 @@ internet or banking access — payments are the mechanism, not the pitch.
 ## Slide 3 — The solution
 
 **On screen:**
-- **TiendaPay**: a command-line payment terminal that
+- **CLIQ**: a command-line payment terminal that
   - accepts **USD₮** directly into a wallet the merchant controls,
   - turns every sale into a **cryptographically signed receipt** nobody can
     alter after the fact,
@@ -147,7 +147,7 @@ transcript in `TESTING.md` if someone wants to check.
 Pick 1–2 of these to speak to, don't read all of them as bullets:
 
 - **Self-custody by construction.** The payment wallet and the ledger-signing
-  identity are two separate keys; TiendaPay itself never holds funds.
+  identity are two separate keys; CLIQ itself never holds funds.
 - **Signature over transport.** The security property that matters — nobody
   can forge a receipt — comes from an Ed25519 signature covering every field
   of the record, independent of however the record gets to another device.
@@ -165,7 +165,7 @@ Pick 1–2 of these to speak to, don't read all of them as bullets:
 **On screen:**
 - `logo-lockup.svg`
 - *Built for the counter, not the cloud.*
-- Repository: `github.com/gabrululu/TiendaPay`
+- Repository: `github.com/Gabrululu/Cliq`
 - (Team / contact — fill in before presenting)
 
 **Visual:** same title-slide treatment as Slide 1, for symmetry.
@@ -201,13 +201,13 @@ whole demo — it's provably not a screenshot:
 ```bash
 # On a second machine (or a clean folder), with the seed running elsewhere:
 pear install pear://<pear-cli-key>
-tiendapay-cli --version
+cliq-cli --version
 
 # Meanwhile, on the dev machine: bump the version, rebuild, re-stage
 # ... (see pear-cli/README.md for the exact build steps)
 
 # Back on the installed copy, a few seconds later, unattended:
-tiendapay-cli --version   # now shows the new version — nobody touched this machine
+cliq-cli --version   # now shows the new version — nobody touched this machine
 ```
 
 Keep `pear seed pear://<pear-cli-key> --no-tty` running the whole time, on a

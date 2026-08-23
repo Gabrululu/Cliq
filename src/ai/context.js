@@ -39,7 +39,7 @@ function summarizeLedger () {
 
 function buildContext () {
   return [
-    'Datos del comercio (TiendaPay), extraidos del almacen local:',
+    'Datos del comercio (CLIQ), extraidos del almacen local:',
     '',
     summarizeInvoices(),
     '',
