@@ -1,4 +1,4 @@
-# TiendaPay — Brand Kit
+# CLIQ — Brand Kit
 
 Reference sheet for building the pitch deck, slides, or any other presentation
 material. Pull colors, type, copy, and logo files straight from here — nothing
@@ -6,7 +6,7 @@ in this document should need to be reinvented per-deck.
 
 ## 1. Brand in one paragraph
 
-TiendaPay is a self-custodial USD₮ payment terminal for small and medium
+CLIQ is a self-custodial USD₮ payment terminal for small and medium
 businesses. The visual identity is built around a single idea: **a signed
 receipt is the product.** Every color, shape, and typographic choice traces
 back to the physical object of a paper receipt — stamped, dated, itemized,
@@ -15,7 +15,7 @@ Warm, paper-like, tactile. Not another cold fintech-blue dashboard.
 
 ## 2. Name and tagline
 
-- **Name:** TiendaPay (one word, capital T and P — `TiendaPay`, not `Tienda Pay`).
+- **Name:** CLIQ (one word, capital T and P — `CLIQ`, not `CLIQ`).
 - **Positioning line:** *A payment terminal for merchants, not for the cloud.*
 - **Descriptive line (for slide subtitles / meta descriptions):**
   *Self-custodial USD₮ payments, a tamper-proof sales ledger, and offline-first
@@ -80,7 +80,7 @@ Files live in [`public/assets/`](public/assets/):
 |---|---|
 | `logo-mark.svg` | Icon-only mark, sand background. Default choice — favicons, small placements, light slide backgrounds. |
 | `logo-mark-dark.svg` | Icon-only mark, ink background. Use on dark slide backgrounds. |
-| `logo-lockup.svg` | Mark + "TiendaPay" wordmark, horizontal. Use for title slides, README header, anywhere the full name needs to appear once at the top. |
+| `logo-lockup.svg` | Mark + "CLIQ" wordmark, horizontal. Use for title slides, README header, anywhere the full name needs to appear once at the top. |
 
 **What the mark is:** a circular seal — echoing a stamped receipt — containing
 a ₮ glyph (a T with two horizontal strokes, the conventional USD₮ symbol)

@@ -1,13 +1,13 @@
 {
-  "name": "tiendapay-cli",
-  "productName": "tiendapay",
+  "name": "cliq-cli",
+  "productName": "cliq",
   "version": "0.0.5",
-  "description": "TiendaPay CLI - terminal de pagos P2P para pequenos comercios (Pear track submission).",
+  "description": "CLIQ CLI - terminal de pagos P2P para pequenos comercios (Pear track submission).",
   "private": true,
-  "bin": "tiendapay",
+  "bin": "cliq",
   "upgrade": "pear://yfaoocfpgnqxawjgx9bkakq4fx3tur856enabkmg847rfmts36oo",
   "pear": {
-    "name": "tiendapay-cli"
+    "name": "cliq-cli"
   },
   "author": "",
   "license": "MIT"

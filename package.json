@@ -1,5 +1,5 @@
 {
-  "name": "tiendapay",
+  "name": "cliq",
   "version": "0.0.1",
   "description": "Terminal de pagos USD₮ autocustodial para pequenos comercios, distribuida via Pear, con libro mayor firmado y sincronizado P2P.",
   "main": "index.js",
@@ -7,11 +7,11 @@
   "author": "",
   "license": "MIT",
   "pear": {
-    "name": "tiendapay",
+    "name": "cliq",
     "stage": {
       "ignore": [
         ".env",
-        ".tiendapay",
+        ".cliq",
         ".git",
         ".claude"
       ]

@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "tiendapay-agent": {
+    "cliq-agent": {
       "command": "node",
       "args": ["mcp/server.js"]
     }

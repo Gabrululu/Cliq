@@ -1,4 +1,4 @@
-const HELP_TEXT = `TiendaPay - terminal de pagos P2P para pequenos comercios
+const HELP_TEXT = `CLIQ - terminal de pagos P2P para pequenos comercios
 
 Uso:
   merchant <comando> [opciones]

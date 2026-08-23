@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Servidor MCP de TiendaPay para el track WDK (Tether).
+// Servidor MCP de CLIQ para el track WDK (Tether).
 //
 // Expone exactamente DOS tools a un cliente MCP (Claude Desktop, Claude Code,
 // OpenClaw): "quote_invoice_payment" y "confirm_invoice_payment". Ninguna de
@@ -57,16 +57,16 @@ function runAgentSettle (invoiceId, confirm) {
   return parsed
 }
 
-const server = new McpServer({ name: 'tiendapay-agent', version: '0.0.1' })
+const server = new McpServer({ name: 'cliq-agent', version: '0.0.1' })
 
 server.registerTool(
   'quote_invoice_payment',
   {
-    title: 'Cotizar el pago de una factura de TiendaPay',
+    title: 'Cotizar el pago de una factura de CLIQ',
     description:
-      'Cotiza (sin enviar nada) cuanto costaria pagar una factura pendiente de TiendaPay via wdk-cli: monto, destinatario y comision estimada. Usa esto siempre antes de confirm_invoice_payment.',
+      'Cotiza (sin enviar nada) cuanto costaria pagar una factura pendiente de CLIQ via wdk-cli: monto, destinatario y comision estimada. Usa esto siempre antes de confirm_invoice_payment.',
     inputSchema: {
-      invoiceId: z.string().describe('El ID de la factura de TiendaPay, ej. inv_xxxxxxxxxxxx')
+      invoiceId: z.string().describe('El ID de la factura de CLIQ, ej. inv_xxxxxxxxxxxx')
     }
   },
   async ({ invoiceId }) => {
@@ -78,11 +78,11 @@ server.registerTool(
 server.registerTool(
   'confirm_invoice_payment',
   {
-    title: 'Confirmar y enviar el pago de una factura de TiendaPay',
+    title: 'Confirmar y enviar el pago de una factura de CLIQ',
     description:
-      'Envia de verdad el pago de una factura pendiente de TiendaPay via wdk-cli. Rechaza automaticamente (sin tocar la red) si el monto supera el tope de gasto configurado para el agente (AGENT_SPEND_CAP_USDT), y siempre paga al destinatario que ya tiene registrado la factura — nunca a una direccion elegida en esta llamada.',
+      'Envia de verdad el pago de una factura pendiente de CLIQ via wdk-cli. Rechaza automaticamente (sin tocar la red) si el monto supera el tope de gasto configurado para el agente (AGENT_SPEND_CAP_USDT), y siempre paga al destinatario que ya tiene registrado la factura — nunca a una direccion elegida en esta llamada.',
     inputSchema: {
-      invoiceId: z.string().describe('El ID de la factura de TiendaPay a pagar, ej. inv_xxxxxxxxxxxx')
+      invoiceId: z.string().describe('El ID de la factura de CLIQ a pagar, ej. inv_xxxxxxxxxxxx')
     }
   },
   async ({ invoiceId }) => {
@@ -97,6 +97,6 @@ async function main () {
 }
 
 main().catch((err) => {
-  console.error('[tiendapay-mcp] fatal:', err)
+  console.error('[cliq-mcp] fatal:', err)
   process.exit(1)
 })

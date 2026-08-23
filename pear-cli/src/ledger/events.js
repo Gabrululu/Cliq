@@ -10,7 +10,7 @@ function hashEvent (event) {
 function createEvent (fields) {
   const identity = config.load()
   if (!identity) {
-    throw new Error('TiendaPay no esta inicializado. Ejecuta "merchant init" primero.')
+    throw new Error('CLIQ no esta inicializado. Ejecuta "merchant init" primero.')
   }
 
   const previous = store.lastByMerchant(identity.publicKey)

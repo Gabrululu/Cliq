@@ -1,17 +1,17 @@
 {
-  "name": "tiendapay-cli",
-  "productName": "tiendapay",
+  "name": "cliq-cli",
+  "productName": "cliq",
   "version": "0.0.5",
-  "description": "TiendaPay CLI - terminal de pagos P2P para pequenos comercios (Pear track submission, sin el asistente QVAC).",
+  "description": "CLIQ CLI - terminal de pagos P2P para pequenos comercios (Pear track submission, sin el asistente QVAC).",
   "private": true,
   "bin": "bin.mjs",
   "upgrade": "pear://yfaoocfpgnqxawjgx9bkakq4fx3tur856enabkmg847rfmts36oo",
   "pear": {
-    "name": "tiendapay-cli",
+    "name": "cliq-cli",
     "stage": {
       "ignore": [
         ".env",
-        ".tiendapay",
+        ".cliq",
         ".git",
         "out"
       ]
@@ -23,12 +23,12 @@
     "lint": "prettier . --check && lunte",
     "start": "bare bin.mjs --no-updates",
     "make": "node scripts/make.js",
-    "make:darwin-arm64": "bare-build --name tiendapay --standalone --host darwin-arm64 --out ./out/darwin-arm64 bin.mjs",
-    "make:darwin-x64": "bare-build --name tiendapay --standalone --host darwin-x64 --out ./out/darwin-x64 bin.mjs",
-    "make:linux-arm64": "bare-build --name tiendapay --standalone --host linux-arm64 --out ./out/linux-arm64 bin.mjs",
-    "make:linux-x64": "bare-build --name tiendapay --standalone --host linux-x64 --out ./out/linux-x64 bin.mjs",
-    "make:win32-arm64": "bare-build --name tiendapay --standalone --host win32-arm64 --out ./out/win32-arm64 bin.mjs",
-    "make:win32-x64": "bare-build --name tiendapay --standalone --host win32-x64 --out ./out/win32-x64 bin.mjs"
+    "make:darwin-arm64": "bare-build --name cliq --standalone --host darwin-arm64 --out ./out/darwin-arm64 bin.mjs",
+    "make:darwin-x64": "bare-build --name cliq --standalone --host darwin-x64 --out ./out/darwin-x64 bin.mjs",
+    "make:linux-arm64": "bare-build --name cliq --standalone --host linux-arm64 --out ./out/linux-arm64 bin.mjs",
+    "make:linux-x64": "bare-build --name cliq --standalone --host linux-x64 --out ./out/linux-x64 bin.mjs",
+    "make:win32-arm64": "bare-build --name cliq --standalone --host win32-arm64 --out ./out/win32-arm64 bin.mjs",
+    "make:win32-x64": "bare-build --name cliq --standalone --host win32-x64 --out ./out/win32-x64 bin.mjs"
   },
   "dependencies": {
     "bare-abort": "^2.0.13",

@@ -2,7 +2,7 @@ const os = require('bare-os')
 const path = require('bare-path')
 
 function dataDir () {
-  return path.join(os.cwd(), '.tiendapay')
+  return path.join(os.cwd(), '.cliq')
 }
 
 function configFile () {
