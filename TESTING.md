@@ -196,6 +196,26 @@ Expuesto a un agente vía un servidor MCP propio (`mcp/server.js`, Node.js — n
 - [x] Cotización (`--dry-run`) y envío real (`wdk send`, y tambien `merchant gasless pay <id> --yes`) funcionaron sin ETH, con el fee cobrado en USD₮ — `txHash` real, y el balance de USD₮ del destinatario subió exactamente lo esperado.
 - [x] **`merchant gasless pay <invoice-id> [--yes]`** (`src/commands/gasless.js`, nuevo comando de producto, mismo patrón que `agent.js`): cotiza y paga una factura real de TiendaPay por esta vía, generando el mismo recibo firmado y encadenado que `pay`/`agent settle` (`receipt verify` con firma y encadenamiento OK).
 
+## 11. QVAC Track (Tether) — Track 1: reconciliación de comprobantes (OCR + LLM local)
+
+Track separado de WDK/Pears, mismo sponsor. Brief: "Local agents that replace operations work", caso insignia explícito: reconciliación de facturas via OCR. Se construyó `merchant reconcile <invoice-id> <ruta-imagen> [--json]` sobre el dominio real de TiendaPay (facturas), no como demo aislada.
+
+**Qué se construyó**: `src/ai/qvac.js` ganó dos funciones nuevas sobre el mismo runtime QVAC que ya usaba `ask` — `ocrImage(imagePath)` (carga `OCR_LATIN`/EasyOCR vía el nuevo addon `@qvac/ocr-ggml`, corre `sdk.ocr(...)`) y `reconcileReceipt(invoice, ocrText)` (carga el mismo `LLAMA_3_2_1B_INST_Q4_0` de `ask`, le pide que extraiga el monto del texto OCR y compare contra la factura). `src/commands/reconcile.js` encadena ambos pasos y nunca cambia el estado de la factura — es una lectura asistida para que decida un humano.
+
+**Hallazgo real de fiabilidad (encontrado en la primera corrida, no simulado)**: se le pasó un comprobante sintético con `Monto: 12 USDT` contra una factura de `5 USDT`. El modelo extrajo el monto correctamente (`MONTO_DETECTADO: 12`) pero declaró `VEREDICTO: COINCIDE` — extrae bien, compara mal, exactamente el tipo de falla que advierte el brief para modelos chicos. **Solución de fiabilidad, no de prompt**: se agregó `computeVerdict()` en `src/ai/qvac.js`, que ignora el veredicto del modelo y calcula `COINCIDE`/`NO_COINCIDE`/`INCIERTO` en código comparando el monto extraído contra `invoice.amount`. El veredicto del modelo se conserva aparte (`modelVerdict`) solo para detectar y exponer el desacuerdo (`modelDisagreed: true`), nunca para decidir — mismo principio de "guardrail en código, no en el prompt" que `agent.js` (WDK Track 1).
+
+**Validado de punta a punta (2026-08-23), con comprobantes sintéticos generados para la prueba** (sin cámara en este entorno de desarrollo — se genera con PIL, texto renderizado, no una foto real; documentado como lo que es):
+- [x] Comprobante limpio, monto correcto (`5 USDT` vs factura de `5 USDT`) → OCR detecta 4 bloques, modelo extrae `5`, veredicto `COINCIDE`, `modelDisagreed: false`.
+- [x] Mismo comprobante rotado 3° + ruido + blur gaussiano (simulando foto con mala luz) → OCR sigue leyendo el texto completo (1 bloque en vez de 4, pero íntegro) → `COINCIDE`.
+- [x] Comprobante con monto distinto (`12 USDT` vs factura de `5 USDT`) → el bug de arriba: modelo dice `COINCIDE`, código calcula `NO_COINCIDE` (correcto) y marca `modelDisagreed: true`.
+- [x] Imagen en blanco (sin texto) → falla explícito ("no se detectó texto legible"), 0 bloques, no llega a invocar el modelo de texto.
+- [x] `invoice-id` inexistente → falla antes de tocar OCR. Ruta de imagen inexistente → falla antes de tocar OCR.
+- [x] Reintento de formato: `reconcileReceipt` pide al modelo 3 líneas con etiquetas fijas (`VEREDICTO`/`MONTO_DETECTADO`/`EXPLICACION`) en vez de JSON libre (un modelo de 1B falla seguido generando JSON válido); si el parseo falla reintenta una vez con un prompt más estricto antes de devolver `INCIERTO` en vez de inventar un resultado. En las 4 corridas de arriba, el modelo respondió en el formato esperado al primer intento (`modelAttempts: 1`).
+
+**Modelo y hardware**: `OCR_LATIN` (EasyOCR, ~15MB detector CRAFT + ~83MB reconocedor, resueltos automáticamente por el registry) y `LLAMA_3_2_1B_INST_Q4_0` (1B, Q4), ambos vía `@qvac/sdk` sobre Bare. Contenedor de 4 vCPU (AMD EPYC 9V74), 15GB RAM, sin GPU (`no usable GPU found`, confirmado en el log de `llama.cpp`). Una corrida completa (cargar OCR, leer imagen, descargar ambos modelos de memoria, cargar LLM, reconciliar, descargar de memoria — sin daemon persistente) tardó **~24s** medido con `time`.
+
+**Limitación honesta**: las explicaciones en español que da el modelo a veces son imprecisas incluso cuando el veredicto (calculado en código) es correcto — ej. dijo "el monto no es claro" en una corrida donde sí lo había extraído bien. No afecta la decisión (el veredicto no depende de la explicación), pero es una limitación real del modelo de 1B generando texto libre, documentada tal cual en vez de ocultada.
+
 ## Orden sugerido
 
 1. **#2 Pagos** (WDK contra red real).

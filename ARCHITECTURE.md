@@ -436,3 +436,43 @@ point before, during, and after the transaction, and the same signed-ledger
 receipt (`ledger/events.js`, `invoice_paid`) as every other payment path in
 TiendaPay — the merchant-facing invoice/receipt model doesn't change based
 on which module actually moved the money.
+
+## 14. `reconcile.js`: QVAC Track 1 (OCR + LLM receipt reconciliation)
+
+A separate track from the same sponsor, brief's flagship use case is invoice
+reconciliation via OCR — which maps directly onto TiendaPay's existing
+invoice domain instead of needing a new one invented for the prize.
+`src/ai/qvac.js` gained two functions alongside the `ask` completion helper
+it already had: `ocrImage(imagePath)` (loads `OCR_LATIN`, an EasyOCR model
+whose CRAFT detector the registry derives automatically, via the new
+`@qvac/ocr-ggml` addon and `sdk.ocr()`) and `reconcileReceipt(invoice,
+ocrText)` (loads the same `LLAMA_3_2_1B_INST_Q4_0` completion model `ask`
+uses, and asks it to extract an amount from OCR'd text and compare it
+against the invoice already on file). `src/commands/reconcile.js` chains the
+two and never writes to the invoice store — it's an assistive read a human
+acts on, not an autonomous state change.
+
+The interesting design decision came out of the first real run, not out of
+anticipating a failure mode in the abstract: given a synthetic receipt
+reading "12 USDT" against a 5 USDT invoice, the model extracted the amount
+correctly (`MONTO_DETECTADO: 12`) but still answered `VEREDICTO: COINCIDE`
+— it's fine at extraction and unreliable at the comparison step, which is
+exactly the small-model failure mode the QVAC brief calls out by name. The
+fix isn't a better prompt; it's the same principle already used for
+`agent.js`'s spend cap: **the verdict that matters is never the model's**.
+`computeVerdict()` takes the amount the model extracted and compares it to
+the invoice amount in plain arithmetic, in code; that's the verdict
+`reconcile` reports. The model's own verdict is kept only as `modelVerdict`,
+purely so a disagreement (`modelDisagreed: true`) is visible rather than
+silently swallowed — useful signal for whoever is reading the output, never
+an input to the decision itself.
+
+A second reliability choice: the model is never asked for free-form JSON.
+`reconcileReceipt` prompts for three fixed, labeled lines
+(`VEREDICTO`/`MONTO_DETECTADO`/`EXPLICACION`) parsed with a plain regex, and
+retries once with a stricter prompt if a line is missing before giving up
+and reporting `INCIERTO` — an honest "couldn't tell" rather than an invented
+number, which is the specific bar the brief sets for what makes a
+submission strong in this track. Full transcript of all five test cases
+(clean match, rotated/noisy match, mismatch that exposed the bug above,
+blank image, missing invoice/file) is in `TESTING.md`.

@@ -89,8 +89,9 @@ network conditions during the talk.
   with one command (`pear install pear://<key>`, no Node/Bare/Pear needed on
   the receiving machine) and updates itself in place — proven live, not just
   described.
-- **QVAC** — fully local LLM inference for the natural-language sales
-  assistant; no data leaves the device.
+- **QVAC** — fully local inference: a natural-language sales assistant, and
+  OCR + LLM invoice reconciliation against real receipts. No data leaves
+  the device.
 
 **Visual:** three simple labeled blocks, `ink`-on-`sand`, no logos borrowed
 from the track sponsors unless their brand guidelines explicitly allow it.
@@ -122,6 +123,11 @@ works fully with QVAC turned off.
     recipient, quote-then-confirm — and a `gasless pay` command that settles
     an invoice with zero ETH in the wallet, fee paid entirely in USD₮ via an
     ERC-4337 smart account and a Pimlico paymaster.
+  - QVAC Track 1: `reconcile` runs local OCR + a local LLM to check a
+    receipt against an invoice. First real run caught the model extracting
+    the right amount but comparing it wrong — fixed by moving the verdict
+    out of the model and into code, the same guardrail pattern as the
+    payment agent.
 - Two real bugs were found and fixed by actually running this against live
   networks, not just reading the code: a P2P hang with no DHT bootstrap, and
   an updater silently looking in the wrong place for its own binary.

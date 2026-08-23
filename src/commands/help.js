@@ -19,6 +19,7 @@ Comandos:
   ask "<pregunta>"                Consulta el libro mayor en lenguaje natural (QVAC, local)
   agent settle <id> [--yes]       Paga una factura via @tetherto/wdk-cli con guardrails (pensado para un agente MCP)
   gasless pay <id> [--yes]        Paga una factura sin ETH: fee cobrado en USD₮ (ERC-4337 + paymaster Pimlico)
+  reconcile <id> <imagen> [--json] Concilia un comprobante (foto/scan) contra una factura via OCR local (QVAC)
   version                       Muestra la version instalada
   help                          Muestra esta ayuda
 `

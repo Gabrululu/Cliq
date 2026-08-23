@@ -53,7 +53,7 @@ Un comercio pequeno necesita cobrar en USD₮, llevar sus cuentas y verificar su
 
 1. **WDK** (principal) - wallet, balance, invoices y transferencias.
 2. **Pears** (secundario) - distribucion e instalacion OTA de la CLI.
-3. **QVAC** (bonus) - consultas en lenguaje natural sobre el libro mayor.
+3. **QVAC** - consultas en lenguaje natural sobre el libro mayor (`ask`), y reconciliacion de comprobantes via OCR + LLM local (`reconcile`, QVAC Track 1).
 
 ## Estado actual
 
@@ -67,6 +67,7 @@ Un comercio pequeno necesita cobrar en USD₮, llevar sus cuentas y verificar su
 - [x] Pear Track - CLI standalone instalable con `pear install` + actualizacion OTA real, ver [`pear-cli/`](pear-cli/)
 - [x] WDK Track (1/2) - agente con guardrails sobre `@tetherto/wdk-cli` + MCP, ver seccion abajo
 - [x] WDK Track (2/2, gasless) - pago real sin ETH, fee en USD₮ (ERC-4337 + paymaster Pimlico), ver seccion abajo
+- [x] QVAC Track (1/2, reconciliacion) - OCR + LLM local para conciliar comprobantes contra facturas, ver seccion abajo
 
 ## Requisitos
 
@@ -193,6 +194,33 @@ bare index.js ask "cuanto vendi en total?"
 
 **Aviso de espacio en disco:** `@qvac/sdk` (el paquete "completo", pensado para Node/Expo) trae **todos** sus addons nativos como dependencias — llm, whisper, ocr, tts, difusion de imagenes, etc. — aunque solo se use uno. En este entorno, `npm install` con `@qvac/sdk` hizo crecer `node_modules` a **~6GB**. Para el CLI final via Pear conviene migrar a [`@qvac/bare-sdk`](https://www.npmjs.com/package/@qvac/bare-sdk) instalando *solo* `@qvac/llm-llamacpp` (el addon de completion, ~520MB) y armando un worker entry propio (`qvac/worker.pear.entry.mjs`, ver docs de `@qvac/bare-sdk`) — deje `@qvac/sdk` por simplicidad y porque tambien corre en Node (mas facil de probar en tu maquina), pero no lo instales si el espacio en disco es limitado.
 
+## QVAC Track (Tether) — Track 1: reconciliacion de comprobantes (OCR + LLM local)
+
+El caso de uso insignia que pide el brief de QVAC (agentes locales para trabajo de back-office: reconciliacion de facturas) mapea directo al dominio que TiendaPay ya tiene — facturas reales — asi que se construyo sobre eso, no como una demo generica aparte.
+
+```bash
+bare index.js reconcile <invoice-id> <ruta-a-la-imagen-del-comprobante> [--json]
+```
+
+Que hace: toma una foto/escaneo de un comprobante de pago, le corre OCR local (`@qvac/sdk` + addon `@qvac/ocr-ggml`, modelo `OCR_LATIN` de EasyOCR — detector CRAFT derivado automaticamente por el registry), y compara el texto extraido contra la factura ya registrada en TiendaPay, marcando `COINCIDE` / `NO_COINCIDE` / `INCIERTO` con una explicacion en espanol verificable en cinco segundos. No cambia el estado de la factura: es una lectura asistida para que un humano decida, no un pago automatico.
+
+**Decision de diseño clave, encontrada probando esto de verdad:** en la primera corrida real, el modelo de texto (`LLAMA_3_2_1B_INST_Q4_0`, el mismo que usa `ask`) extrajo *correctamente* el monto del comprobante (`12`) pero dijo `VEREDICTO: COINCIDE` contra una factura de `5` — un modelo de 1B es bueno extrayendo texto pero malo comparando numeros. La solucion no fue "mejorar el prompt": el veredicto final **nunca sale del modelo**. `src/ai/qvac.js` (`computeVerdict`) toma el monto que el modelo extrajo y lo compara con el de la factura *en codigo*, con el mismo criterio de "el guardrail vive en codigo, no en el prompt" que ya se uso en `agent.js` (WDK Track 1). El veredicto que el modelo mismo dio se guarda aparte (`modelVerdict`) solo para poder detectar y mostrar el desacuerdo (`modelDisagreed: true`), nunca para decidir.
+
+**Probado con comprobantes sinteticos generados para esta prueba** (no hay camara en este entorno de desarrollo; se documenta como lo que es, no se presenta como fotos reales):
+- Comprobante limpio con el monto correcto -> `COINCIDE`, el modelo extrae el monto bien y coincide con su propio veredicto.
+- Mismo comprobante rotado 3° + ruido + blur simulando una foto con mala luz -> OCR sigue leyendo el texto correcto (1 bloque en vez de 4, pero completo) -> `COINCIDE`.
+- Comprobante con un monto distinto al de la factura (`12` contra una factura de `5`) -> este es el caso que expuso el bug de arriba: el modelo dijo `COINCIDE`, el veredicto calculado en codigo dice `NO_COINCIDE` (correcto) y marca `modelDisagreed: true`.
+- Imagen en blanco (sin texto) -> falla explicito ("no se detecto texto legible"), no inventa un monto.
+- Factura inexistente / archivo de imagen inexistente -> falla explicito antes de tocar el modelo.
+
+**Modelo y hardware:** `OCR_LATIN` (EasyOCR, detector CRAFT auto-derivado, ~15MB + ~83MB) y `LLAMA_3_2_1B_INST_Q4_0` (1B parametros, cuantizado Q4), ambos via `@qvac/sdk` sobre Bare, corridos en un contenedor de 4 vCPU (AMD EPYC 9V74) / 15GB RAM, sin GPU. Una corrida completa (OCR + reconciliacion, cargando y descargando ambos modelos de memoria en cada llamada, sin daemon) tarda **~24s** en este hardware.
+
+**Limitacion honesta:** las explicaciones en espanol que da el modelo a veces son gramaticalmente imprecisas o mencionan detalles menores incorrectos (ej. "el monto no es claro" en un caso donde si lo detecto bien) aunque el veredicto final (calculado en codigo, no por el modelo) sea correcto — es una limitacion conocida de un modelo de 1B generando texto libre, no del pipeline de reconciliacion en si. El veredicto es lo que importa para la decision; la explicacion es solo un resumen para que el humano la lea mas rapido, siempre acompañada del texto OCR crudo para que pueda verificar a mano.
+
+**Permalinks a donde corre la inferencia QVAC** (reemplazar `main` por el commit exacto al pushear):
+- [`src/ai/qvac.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/ai/qvac.js) — `ocrImage` (OCR) y `reconcileReceipt` + `computeVerdict` (LLM + guardrail de comparacion en codigo).
+- [`src/commands/reconcile.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/reconcile.js) — comando `merchant reconcile`.
+
 ### Configurar la wallet (WDK)
 
 1. Copia `.env.example` a `.env`.
@@ -308,9 +336,9 @@ Track separado del hackathon, mismo sponsor que Pears (regla del brief: "Pick on
 Expuesto a un agente de IA con un servidor MCP propio, [`mcp/server.js`](mcp/server.js), con dos tools: `quote_invoice_payment` y `confirm_invoice_payment` — ninguna de las dos acepta un monto o direccion libre, solo un `invoiceId`.
 
 **Permalinks a donde se usa WDK** (reemplazar `main` por el commit exacto al pushear):
-- [`src/commands/agent.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/src/commands/agent.js) — llama a `wdk send`/`wdk get` vía `bare-subprocess`, con los guardrails (Track 1).
-- [`mcp/server.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/mcp/server.js) — servidor MCP que expone los dos tools (Track 1).
-- [`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/src/commands/gasless.js) — pago gasless via ERC-4337 + paymaster (Track 2).
+- [`src/commands/agent.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/agent.js) — llama a `wdk send`/`wdk get` vía `bare-subprocess`, con los guardrails (Track 1).
+- [`mcp/server.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/mcp/server.js) — servidor MCP que expone los dos tools (Track 1).
+- [`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/gasless.js) — pago gasless via ERC-4337 + paymaster (Track 2).
 
 ### Setup desde un clon limpio
 
@@ -345,7 +373,7 @@ bare index.js agent settle <invoice-id> --yes    # paga de verdad
 
 **Modulo usado**: `@tetherto/wdk-wallet-evm-erc-4337` (viene incluido como dependencia de `@tetherto/wdk-cli`) — cuentas inteligentes ERC-4337 con paymaster, para que quien paga no necesite tener ETH: el fee de red se cobra en USD₮.
 
-**Que se construyo**: `merchant gasless pay <invoice-id> [--yes]` ([`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/d798ef4e0e03e9737c306b1f1db94867df9868eb/src/commands/gasless.js)) — mismo patron que `agent settle` (cotiza sin `--yes`, paga de verdad con `--yes`, genera el mismo recibo firmado), pero contra una **cuenta inteligente** en vez de la wallet EVM comun. La cuenta inteligente tiene una direccion distinta a la wallet normal (confirmado: `0x8469a1A3...` vs `0x86aCC9bc...` del mismo seed) y nunca necesito ETH para pagar — el paymaster de Pimlico cobra el fee directo en USD₮.
+**Que se construyo**: `merchant gasless pay <invoice-id> [--yes]` ([`src/commands/gasless.js`](https://github.com/Gabrululu/TiendaPay/blob/6ad6b1e81194d1fdff48ebaa10e8e88f862372d1/src/commands/gasless.js)) — mismo patron que `agent settle` (cotiza sin `--yes`, paga de verdad con `--yes`, genera el mismo recibo firmado), pero contra una **cuenta inteligente** en vez de la wallet EVM comun. La cuenta inteligente tiene una direccion distinta a la wallet normal (confirmado: `0x8469a1A3...` vs `0x86aCC9bc...` del mismo seed) y nunca necesito ETH para pagar — el paymaster de Pimlico cobra el fee directo en USD₮.
 
 ### Setup (adicional al de Track 1)
 
@@ -417,6 +445,8 @@ Esta lista refleja lo que **falta de verdad**, no lo que "no se pudo probar" —
 - La network gasless custom (`smart-account-sepolia-pimlico`) vive en la config local de `wdk-cli` (`~/.config/wdk-cli/config.json`), no en este repo — hay que recrearla en cada maquina nueva con los pasos de la seccion "WDK Track — Track 2" (incluida la API key propia de Pimlico, que no se comparte).
 - Tras cualquier `wdk network create`/`wdk token add`, hay que reiniciar el daemon de `wdk-cli` (`wallet lock --all` + `wallet unlock`) para que tome la config nueva — no la relee solo. Bug real encontrado al implementar Track 2, documentado en `TESTING.md` seccion 10.
 - `merchant agent settle` (WDK Track 1) requiere que el wallet de `wdk-cli` este importado y desbloqueado a mano una vez (`wdk wallet import` + `wdk wallet unlock --ttl 0`, ver seccion de arriba) antes de usarse — no lo hace el comando en si.
+- `merchant reconcile` (QVAC Track 1) se probo con comprobantes sinteticos generados para la prueba, no con fotos reales de comprobantes en distintas condiciones de camara — el pipeline de OCR es real y corre local, pero la variedad de inputs "sucios" es limitada por no tener camara en este entorno de desarrollo.
+- El addon `@qvac/ocr-ggml` (~500MB con sus binarios nativos) se suma al ya pesado `@qvac/sdk` — misma nota de espacio en disco que la seccion de `ask` de arriba.
 
 ## Seguridad
 
@@ -435,10 +465,11 @@ src/
   invoices/store.js      Almacen local de facturas
   ledger/                Eventos firmados (creacion, verificacion, almacen)
   p2p/                    Sincronizacion via Hyperswarm (protocolo, fusion, swarm)
-  ai/                     Contexto + integracion con QVAC para "merchant ask"
+  ai/                     Contexto + integracion con QVAC para "merchant ask" y "merchant reconcile" (OCR + LLM)
   util/                   Helpers compartidos (flags, .env, formato de montos, paths)
   commands/agent.js       WDK Track 1: "agent settle", guardrails sobre @tetherto/wdk-cli
   commands/gasless.js     WDK Track 2: "gasless pay", fee en USD₮ via ERC-4337 + paymaster
+  commands/reconcile.js   QVAC Track 1: "reconcile", conciliacion de comprobantes via OCR + LLM local
 mcp/
   server.js               WDK Track: servidor MCP (Node.js) con los tools quote/confirm_invoice_payment
 public/

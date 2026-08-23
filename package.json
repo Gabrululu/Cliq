@@ -24,6 +24,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@qvac/llm-llamacpp": "^0.46.0",
+    "@qvac/ocr-ggml": "^0.19.0",
     "@qvac/sdk": "^0.17.1",
     "@tetherto/wdk": "^1.0.0-beta.16",
     "@tetherto/wdk-cli": "^1.0.0-beta.3",
