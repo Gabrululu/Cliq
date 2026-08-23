@@ -1,0 +1,5 @@
+node_modules/
+.tiendapay/
+.env
+.pear/
+*.log

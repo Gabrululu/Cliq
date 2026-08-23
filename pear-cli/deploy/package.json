@@ -1,0 +1,14 @@
+{
+  "name": "tiendapay-cli",
+  "productName": "tiendapay",
+  "version": "0.0.5",
+  "description": "TiendaPay CLI - terminal de pagos P2P para pequenos comercios (Pear track submission).",
+  "private": true,
+  "bin": "tiendapay",
+  "upgrade": "pear://yfaoocfpgnqxawjgx9bkakq4fx3tur856enabkmg847rfmts36oo",
+  "pear": {
+    "name": "tiendapay-cli"
+  },
+  "author": "",
+  "license": "MIT"
+}

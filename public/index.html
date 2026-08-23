@@ -1,0 +1,701 @@
+<meta charset="utf-8">
+<title>TiendaPay</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,500;1,9..144,600&family=Karla:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ Tokens ============ */
+  :root {
+    --sand:  #E4D5B7;
+    --tan:   #C9B79C;
+    --clay:  #A78A7F;
+    --umber: #6E5B5B;
+    --ink:   #3F3A3A;
+
+    --bg: var(--sand);
+    --surface: var(--tan);
+    --surface-strong: var(--clay);
+    --text: var(--ink);
+    --text-muted: var(--umber);
+    --accent: var(--clay);
+    --border: color-mix(in srgb, var(--clay) 55%, transparent);
+    --btn-bg: var(--ink);
+    --btn-text: var(--sand);
+    --shadow: color-mix(in srgb, var(--ink) 18%, transparent);
+
+    --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: "Karla", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: var(--ink);
+      --surface: var(--umber);
+      --surface-strong: var(--clay);
+      --text: var(--sand);
+      --text-muted: var(--tan);
+      --accent: var(--clay);
+      --border: color-mix(in srgb, var(--clay) 45%, transparent);
+      --btn-bg: var(--sand);
+      --btn-text: var(--ink);
+      --shadow: color-mix(in srgb, black 45%, transparent);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: var(--ink);
+    --surface: var(--umber);
+    --surface-strong: var(--clay);
+    --text: var(--sand);
+    --text-muted: var(--tan);
+    --accent: var(--clay);
+    --border: color-mix(in srgb, var(--clay) 45%, transparent);
+    --btn-bg: var(--sand);
+    --btn-text: var(--ink);
+    --shadow: color-mix(in srgb, black 45%, transparent);
+  }
+
+  /* ============ Base ============ */
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img, svg { max-width: 100%; display: block; }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 5vw, 56px);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.08;
+    text-wrap: balance;
+    margin: 0;
+    color: var(--text);
+  }
+
+  em { font-style: italic; font-weight: 500; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  .lede {
+    font-size: clamp(17px, 1.4vw, 19.5px);
+    color: var(--text-muted);
+    max-width: 46ch;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ============ Buttons ============ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    padding: 13px 24px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  }
+  .btn-primary {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -8px var(--shadow); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--text); }
+  .btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* ============ Header ============ */
+  header.site {
+    padding: 26px 0 0;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 21px;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .wordmark span { color: var(--text-muted); font-weight: 600; }
+  .wordmark svg { width: 26px; height: 26px; flex-shrink: 0; }
+  .nav-links {
+    display: none;
+    gap: 30px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 14.5px;
+    font-weight: 600;
+  }
+  .nav-links a { text-decoration: none; color: var(--text-muted); }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta { display: none; }
+  @media (min-width: 900px) {
+    .nav-links { display: flex; }
+    .nav-cta { display: inline-flex; }
+  }
+
+  /* ============ Hero ============ */
+  .hero {
+    padding: clamp(48px, 8vw, 96px) 0 clamp(56px, 8vw, 104px);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .hero { grid-template-columns: 1.05fr 0.95fr; gap: 40px; }
+  }
+  .hero h1 {
+    font-size: clamp(38px, 5.6vw, 62px);
+    margin-top: 18px;
+  }
+  .hero .lede { margin-top: 20px; font-size: clamp(17px, 1.6vw, 20px); max-width: 48ch; }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 32px;
+  }
+  .hero-note {
+    margin-top: 22px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  /* ---- receipt visual ---- */
+  .receipt-stage {
+    display: flex;
+    justify-content: center;
+    perspective: 1200px;
+  }
+  .receipt {
+    position: relative;
+    width: min(340px, 90%);
+    background: color-mix(in srgb, var(--bg) 55%, var(--surface) 45%);
+    border: 1px solid var(--border);
+    padding: 30px 26px 40px;
+    transform: rotate(2.5deg);
+    box-shadow: 0 24px 48px -20px var(--shadow), 0 4px 10px -4px var(--shadow);
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% 96%,
+      95% 100%, 90% 96%, 85% 100%, 80% 96%, 75% 100%, 70% 96%, 65% 100%,
+      60% 96%, 55% 100%, 50% 96%, 45% 100%, 40% 96%, 35% 100%, 30% 96%,
+      25% 100%, 20% 96%, 15% 100%, 10% 96%, 5% 100%, 0% 96%
+    );
+  }
+  .receipt-head {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+  }
+  .receipt-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 21px;
+    margin-bottom: 4px;
+  }
+  .receipt-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+  .receipt-line {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 7px 0;
+    border-bottom: 1px dotted var(--border);
+  }
+  .receipt-line:last-of-type { border-bottom: none; }
+  .receipt-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .receipt-total .amount {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 26px;
+  }
+  .receipt-total .label {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .receipt-seal {
+    position: absolute;
+    top: 22px;
+    right: 2px;
+    background: var(--surface-strong);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 6px 10px;
+    transform: rotate(6deg);
+    box-shadow: 0 6px 14px -6px var(--shadow);
+  }
+
+  /* ============ Section shell ============ */
+  section { padding: clamp(52px, 7vw, 92px) 0; }
+  .section-head {
+    max-width: 62ch;
+    margin-bottom: clamp(32px, 5vw, 48px);
+  }
+  .section-head h2 {
+    font-size: clamp(28px, 3.4vw, 40px);
+    margin-top: 14px;
+  }
+
+  .divider {
+    height: 1px;
+    background-image: linear-gradient(to right, var(--border) 60%, transparent 0%);
+    background-size: 14px 1px;
+    background-repeat: repeat-x;
+  }
+
+  /* ============ Problem ============ */
+  .problem-grid {
+    display: grid;
+    gap: 28px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 760px) { .problem-grid { grid-template-columns: repeat(3, 1fr); } }
+  .problem-item .num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .problem-item p {
+    margin: 10px 0 0;
+    font-size: 16.5px;
+  }
+  .problem-item strong { font-family: var(--font-display); font-weight: 700; }
+
+  /* ============ Features ============ */
+  .features {
+    display: grid;
+    gap: 22px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .features { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .features { grid-template-columns: repeat(3, 1fr); } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card:nth-child(3n+1) { transform: rotate(-0.4deg); }
+  .card:nth-child(3n+2) { transform: rotate(0.3deg); }
+  .card:nth-child(3n)   { transform: rotate(-0.2deg); }
+
+  .card-mark {
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid var(--text);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .card h3 {
+    font-size: 19px;
+    font-weight: 700;
+  }
+  .card p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 15px;
+  }
+
+  /* ============ How it works ============ */
+  .steps {
+    display: grid;
+    gap: 0;
+    grid-template-columns: 1fr;
+    border-top: 1px solid var(--border);
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 20px;
+    padding: 26px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: baseline;
+  }
+  .step .step-num {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--text-muted);
+  }
+  .step h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .step p { margin: 0; color: var(--text-muted); font-size: 15.5px; max-width: 56ch; }
+
+  /* ============ Trust ============ */
+  .trust {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .trust .wrap { display: grid; gap: 32px; }
+  @media (min-width: 860px) { .trust .wrap { grid-template-columns: 1.1fr 0.9fr; align-items: center; } }
+  .trust blockquote {
+    margin: 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.24;
+  }
+  .trust-points {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    font-size: 15px;
+    color: var(--text-muted);
+    border-left: 2px solid var(--border);
+    padding-left: 22px;
+  }
+  .trust-points strong { color: var(--text); font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+  /* ============ Closing CTA ============ */
+  .cta-band {
+    background: var(--btn-bg);
+    color: var(--btn-text);
+  }
+  .cta-band .wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 26px;
+  }
+  @media (min-width: 760px) {
+    .cta-band .wrap { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+  .cta-band h2 {
+    color: var(--btn-text);
+    font-size: clamp(26px, 3.6vw, 38px);
+    max-width: 20ch;
+  }
+  .cta-band .btn-primary {
+    background: var(--btn-text);
+    color: var(--btn-bg);
+  }
+  .cta-band .eyebrow { color: color-mix(in srgb, var(--btn-text) 65%, transparent); }
+  .cta-band .eyebrow::before { background: var(--btn-text); opacity: 0.5; }
+
+  /* ============ Footer ============ */
+  footer {
+    padding: 34px 0 44px;
+  }
+  .footer-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+  .footer-row a { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ============ Instalacion ============ */
+  .install-note {
+    max-width: 60ch;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+  }
+  .install-note:last-of-type { margin-top: 18px; margin-bottom: 0; }
+  .install-code {
+    background: var(--surface-strong);
+    color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 18px clamp(10px, 3vw, 22px);
+    font-family: var(--font-mono);
+    font-size: clamp(11.5px, 3vw, 13.5px);
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+</style>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="wordmark" href="#top">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="96" fill="var(--bg)" stroke="var(--text)" stroke-width="6"/>
+        <circle cx="100" cy="100" r="82" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="4 8"/>
+        <g fill="var(--text)">
+          <rect x="50" y="58" width="100" height="13" rx="3"/>
+          <rect x="93.5" y="58" width="13" height="92" rx="2"/>
+          <rect x="65" y="95" width="70" height="9" rx="2"/>
+          <rect x="65" y="113" width="70" height="9" rx="2"/>
+        </g>
+      </svg>
+      Tienda<span>Pay</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#como-funciona">Como funciona</a></li>
+      <li><a href="#por-que">Por que</a></li>
+      <li><a href="#instalacion">Instalacion</a></li>
+      <li><a href="#confianza">Confianza</a></li>
+    </ul>
+    <a class="btn btn-ghost nav-cta" href="https://github.com/gabrululu/tiendapay" target="_blank" rel="noopener">Ver en GitHub</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero wrap">
+    <div>
+      <span class="eyebrow">Terminal de cobro para tu negocio</span>
+      <h1>El cuaderno de ventas de tu negocio, ahora en dolares digitales</h1>
+      <p class="lede">TiendaPay es una app para cobrar en dolares digitales (USD₮) desde el mostrador de cualquier comercio — tienda, taller, puesto de feria o local de servicios. Cada venta queda anotada y firmada como un recibo que nadie puede alterar, y todo sigue funcionando aunque se corte internet.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#instalacion">Pruebalo ahora</a>
+        <a class="btn btn-ghost" href="#como-funciona">Como funciona</a>
+      </div>
+      <p class="hero-note">Proyecto para Aleph Hackathon 2026 · las llaves quedan en tus manos, no en un banco</p>
+    </div>
+    <div class="receipt-stage">
+      <div class="receipt">
+        <span class="receipt-seal">FIRMADO</span>
+        <div class="receipt-head">
+          <span>TiendaPay</span>
+          <span class="tabular">#1042</span>
+        </div>
+        <div class="receipt-title">Recibo de venta</div>
+        <div class="receipt-sub">Comercio El Sol · hoy, 15:45</div>
+        <div class="receipt-line"><span>Producto vendido</span><span class="tabular">3.20 USD₮</span></div>
+        <div class="receipt-line"><span>Servicio prestado</span><span class="tabular">2.10 USD₮</span></div>
+        <div class="receipt-line"><span>Fiado — Juan P.</span><span class="tabular">7.20 USD₮</span></div>
+        <div class="receipt-total">
+          <span class="label">Total cobrado</span>
+          <span class="amount tabular">12.50 USD₮</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="divider"></div></div>
+
+  <section id="por-que" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Lo que ya sabes, sin lo que te complica</span>
+      <h2>Cobrar es la parte facil. Lo demas es lo que cansa.</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-item">
+        <span class="num tabular">01</span>
+        <p><strong>Llevar la cuenta</strong> de quien pago, quien fia y cuanto vendiste en el dia, a mano o de memoria.</p>
+      </div>
+      <div class="problem-item">
+        <span class="num tabular">02</span>
+        <p><strong>Confiar en un cuaderno</strong> que se puede perder, mojar, o donde cualquiera puede tachar un numero.</p>
+      </div>
+      <div class="problem-item">
+        <span class="num tabular">03</span>
+        <p><strong>Depender de internet</strong> o de un banco para algo tan simple como cobrar una venta.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="que-hace" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Que te da TiendaPay</span>
+        <h2>Todo lo que tu mostrador necesita, nada que no entiendas</h2>
+      </div>
+      <div class="features">
+        <div class="card">
+          <span class="card-mark">$</span>
+          <h3>Cobra en dolares digitales</h3>
+          <p>Aceptas USD₮ directo en tu propia billetera. Las llaves son tuyas — nadie mas puede tocar esa plata.</p>
+        </div>
+        <div class="card">
+          <span class="card-mark">⟳</span>
+          <h3>Funciona sin internet</h3>
+          <p>Anota la venta igual. Cuando vuelve la señal, o cuando otro local con la app esta cerca, todo se pone al dia solo.</p>
+        </div>
+        <div class="card">
+          <span class="card-mark">✓</span>
+          <h3>Recibos que no se pueden falsificar</h3>
+          <p>Cada cobro queda firmado digitalmente, como un sello que nadie puede copiar, borrar ni cambiar despues.</p>
+        </div>
+        <div class="card">
+          <span class="card-mark">?</span>
+          <h3>Preguntale a tu negocio</h3>
+          <p>"¿Cuanto vendi hoy?", "¿quien me debe?" — te responde con tus propios datos, sin mandarlos a ningun servidor.</p>
+        </div>
+        <div class="card">
+          <span class="card-mark">↻</span>
+          <h3>Se actualiza solo</h3>
+          <p>Las mejoras te llegan sin que tengas que hacer nada raro ni entender de tecnologia.</p>
+        </div>
+        <div class="card">
+          <span class="card-mark">⌂</span>
+          <h3>Es tuya, no de un tercero</h3>
+          <p>No hay una empresa en el medio que pueda cerrar, subir comisiones, o quedarse con tu historial de ventas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">De la venta al recibo</span>
+      <h2>Cuatro pasos, el tiempo que tarda un cliente en pagar</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num tabular">01</span>
+        <div><h3>Armas el cobro</h3><p>Cargas el monto y, si quieres, una nota — "corte de pelo", "fiado de Juan" — como en el cuaderno de siempre.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num tabular">02</span>
+        <div><h3>El cliente paga</h3><p>Paga en dolares digitales desde su propio celular. Ves al toque cuanto entro y que comision de red se cobro, sin sorpresas.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num tabular">03</span>
+        <div><h3>Queda el recibo firmado</h3><p>La venta se guarda como un recibo firmado que nadie puede alterar despues, ni tu ni nadie mas.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num tabular">04</span>
+        <div><h3>Se sincroniza sola</h3><p>Si tienes mas de un dispositivo o local, se ponen de acuerdo entre ellos apenas se encuentran — con o sin internet de por medio.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="instalacion">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Pruebalo en tu propia terminal</span>
+        <h2>Como empezar a usarlo</h2>
+      </div>
+      <p class="install-note">TiendaPay corre como una app de linea de comandos en tu propio dispositivo — no hay servidor que levantar ni cuenta que crear. Necesitas tener instalado <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> y <a href="https://pnpm.io" target="_blank" rel="noopener">pnpm</a>.</p>
+      <pre class="install-code"><code>git clone \
+  https://github.com/gabrululu/tiendapay.git
+cd tiendapay
+pnpm add -g bare pear
+pnpm install
+bare index.js init
+bare index.js help</code></pre>
+      <p class="install-note">Con eso ya tienes tu identidad de comercio creada y ves todos los comandos disponibles. Configurar la wallet para cobrar de verdad, crear facturas, verificar recibos y sincronizar entre dispositivos esta documentado paso a paso en el repositorio.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/gabrululu/tiendapay#readme" target="_blank" rel="noopener">Ver la guia completa</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="confianza" class="trust">
+    <div class="wrap">
+      <blockquote>“Tu plata, tus datos, tu negocio. Nadie mas tiene la llave.”</blockquote>
+      <div class="trust-points">
+        <div><strong>Autocustodia</strong><span>Guardas las llaves de tu billetera. TiendaPay no puede mover tu plata ni retenerla.</span></div>
+        <div><strong>Sin servidor central</strong><span>Tu historial de ventas vive en tus propios dispositivos, no en la nube de otro.</span></div>
+        <div><strong>Verificable</strong><span>Cualquier recibo se puede revisar y confirmar que nadie lo toco despues de emitido.</span></div>
+        <div><strong>Se instala y actualiza sola, de verdad</strong><span>Probado en vivo: se instala con un solo comando y una version nueva le llega sola a una copia ya instalada, sin tocar nada.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">Un proyecto abierto</span>
+        <h2>Armado para el mostrador, no para la nube</h2>
+      </div>
+      <a class="btn btn-primary" href="https://github.com/gabrululu/tiendapay" target="_blank" rel="noopener">Ver el proyecto en GitHub</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <span>TiendaPay — Aleph Hackathon 2026</span>
+    <a href="https://github.com/gabrululu/tiendapay" target="_blank" rel="noopener">github.com/gabrululu/tiendapay</a>
+  </div>
+</footer>

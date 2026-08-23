@@ -1,0 +1,36 @@
+{
+  "name": "tiendapay",
+  "version": "0.0.1",
+  "description": "Terminal de pagos USD₮ autocustodial para pequenos comercios, distribuida via Pear, con libro mayor firmado y sincronizado P2P.",
+  "main": "index.js",
+  "type": "commonjs",
+  "author": "",
+  "license": "MIT",
+  "pear": {
+    "name": "tiendapay",
+    "stage": {
+      "ignore": [
+        ".env",
+        ".tiendapay",
+        ".git",
+        ".claude"
+      ]
+    }
+  },
+  "scripts": {
+    "start": "bare index.js",
+    "test": "bare test/index.js"
+  },
+  "dependencies": {
+    "@qvac/llm-llamacpp": "^0.46.0",
+    "@qvac/sdk": "^0.17.1",
+    "@tetherto/wdk": "^1.0.0-beta.16",
+    "@tetherto/wdk-wallet-evm": "^1.0.0-beta.17",
+    "bare-env": "^3.0.1",
+    "bare-fs": "^4.0.0",
+    "bare-os": "^3.0.0",
+    "bare-path": "^3.0.0",
+    "hypercore-crypto": "^3.7.0",
+    "hyperswarm": "^4.17.0"
+  }
+}
