@@ -1,11 +1,11 @@
 {
   "name": "cliq-cli",
   "productName": "cliq",
-  "version": "0.0.5",
+  "version": "0.0.8",
   "description": "CLIQ CLI - terminal de pagos P2P para pequenos comercios (Pear track submission).",
   "private": true,
   "bin": "cliq",
-  "upgrade": "pear://yfaoocfpgnqxawjgx9bkakq4fx3tur856enabkmg847rfmts36oo",
+  "upgrade": "pear://mp8yxd4xro9apkxpsgp34upeuqhdyhem64r7wbtqigjuac9qqemo",
   "pear": {
     "name": "cliq-cli"
   },

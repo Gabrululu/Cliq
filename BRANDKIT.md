@@ -15,7 +15,7 @@ Warm, paper-like, tactile. Not another cold fintech-blue dashboard.
 
 ## 2. Name and tagline
 
-- **Name:** CLIQ (one word, capital T and P — `CLIQ`, not `CLIQ`).
+- **Name:** CLIQ (one word, all caps — `CLIQ`, never "Cliq" or "cliq").
 - **Positioning line:** *A payment terminal for merchants, not for the cloud.*
 - **Descriptive line (for slide subtitles / meta descriptions):**
   *Self-custodial USD₮ payments, a tamper-proof sales ledger, and offline-first
@@ -136,11 +136,16 @@ deck:
 - **No false claims.** Every capability described in customer-facing copy
   must correspond to something the product actually does today — see
   `README.md` for what's implemented vs. still to validate.
-- **Language:** product copy (README, CLI, landing page) is in unaccented,
-  neutral Spanish — no regional slang, no `vos` conjugation. This brand kit,
-  the architecture doc, and the deck are in English by design (for an
-  international/technical audience); keep that split when producing new
-  material rather than mixing languages within one document.
+- **Language:** the CLI's own runtime output (`src/commands/*.js`) stays in
+  unaccented, neutral Spanish — no regional slang, no `vos` conjugation — since
+  that's who the product actually talks to at the counter. Repository
+  documentation (`README.md`, `TESTING.md`, `pear-cli/README.md`) is in
+  English, same as this brand kit, the architecture doc, and the deck, for an
+  international/technical audience. The landing page (`public/index.html`) is
+  bilingual (Spanish/English) with a small toggle in the header — write new
+  landing copy in both languages, keeping the same unaccented, neutral
+  register on the Spanish side. Keep that split when producing new material
+  rather than mixing languages within one document.
 
 ## 8. Ready-to-use lines for slides
 

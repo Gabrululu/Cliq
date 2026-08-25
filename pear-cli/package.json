@@ -5,7 +5,7 @@
   "description": "CLIQ CLI - terminal de pagos P2P para pequenos comercios (Pear track submission, sin el asistente QVAC).",
   "private": true,
   "bin": "bin.mjs",
-  "upgrade": "pear://yfaoocfpgnqxawjgx9bkakq4fx3tur856enabkmg847rfmts36oo",
+  "upgrade": "pear://mp8yxd4xro9apkxpsgp34upeuqhdyhem64r7wbtqigjuac9qqemo",
   "pear": {
     "name": "cliq-cli",
     "stage": {

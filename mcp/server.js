@@ -21,15 +21,15 @@ const path = require('path')
 
 const REPO_ROOT = path.join(__dirname, '..')
 
+const IS_WINDOWS = process.platform === 'win32'
+
 function resolveBarePath () {
-  const home = process.env.HOME || ''
-  const candidates = [
-    'bare',
-    path.join(home, '.local/share/pnpm/bare'),
-    path.join(home, '.local/bin/bare')
-  ]
+  const home = process.env.HOME || process.env.USERPROFILE || ''
+  const candidates = IS_WINDOWS
+    ? ['bare.cmd', 'bare']
+    : ['bare', path.join(home, '.local/share/pnpm/bare'), path.join(home, '.local/bin/bare')]
   for (const candidate of candidates) {
-    const probe = spawnSync(candidate, ['--version'], { stdio: 'ignore' })
+    const probe = spawnSync(candidate, ['--version'], { stdio: 'ignore', shell: IS_WINDOWS })
     if (!probe.error) return candidate
   }
   throw new Error('No se encontro el binario "bare" instalado. Ver README.md.')
@@ -43,7 +43,8 @@ function runAgentSettle (invoiceId, confirm) {
   const child = spawnSync(bare, args, {
     cwd: REPO_ROOT,
     stdio: ['ignore', 'pipe', 'pipe'],
-    encoding: 'utf8'
+    encoding: 'utf8',
+    shell: IS_WINDOWS
   })
 
   const stdout = (child.stdout || '').trim()

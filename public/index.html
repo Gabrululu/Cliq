@@ -190,6 +190,22 @@
   .nav-links a { text-decoration: none; color: var(--text-muted); }
   .nav-links a:hover { color: var(--text); }
   .nav-cta { display: none; }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .lang-toggle {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 7px 11px;
+    cursor: pointer;
+    transition: border-color 160ms ease, color 160ms ease;
+  }
+  .lang-toggle:hover { border-color: var(--text); color: var(--text); }
+  .lang-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (min-width: 900px) {
     .nav-links { display: flex; }
     .nav-cta { display: inline-flex; }
@@ -501,6 +517,66 @@
     overflow-x: auto;
     white-space: pre;
   }
+
+  /* ============ Verificador de recibos ============ */
+  .verify-panel {
+    display: grid;
+    gap: 16px;
+    max-width: 720px;
+  }
+  .verify-input {
+    width: 100%;
+    min-height: 200px;
+    background: var(--surface-strong);
+    color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px clamp(10px, 3vw, 20px);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+  .verify-input::placeholder { color: color-mix(in srgb, var(--bg) 55%, transparent); }
+  .verify-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .verify-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .verify-result {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--text);
+    background: var(--surface);
+    padding: 20px clamp(16px, 3vw, 24px);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .verify-result[hidden] { display: none; }
+  .verify-result.is-valid { border-left-color: var(--accent); }
+  .verify-result-mark {
+    width: 30px;
+    height: 30px;
+    border: 1.5px solid var(--text);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .verify-result.is-valid .verify-result-mark { border-color: var(--accent); color: var(--accent); }
+  .verify-result-body h4 { font-size: 17px; margin-bottom: 6px; }
+  .verify-result-body p { margin: 0; color: var(--text-muted); font-size: 14.5px; max-width: 56ch; }
+  .verify-result-fields {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    display: grid;
+    gap: 5px;
+    word-break: break-all;
+  }
+  .verify-result-fields span { color: var(--text); }
 </style>
 
 <header class="site">
@@ -516,44 +592,50 @@
           <rect x="65" y="113" width="70" height="9" rx="2"/>
         </g>
       </svg>
-      Cliq
+      CLIQ
     </a>
     <ul class="nav-links">
-      <li><a href="#como-funciona">Como funciona</a></li>
-      <li><a href="#por-que">Por que</a></li>
-      <li><a href="#instalacion">Instalacion</a></li>
-      <li><a href="#confianza">Confianza</a></li>
+      <li><a href="#como-funciona" data-i18n="nav.como_funciona">Como funciona</a></li>
+      <li><a href="#por-que" data-i18n="nav.por_que">Por que</a></li>
+      <li><a href="#instalacion" data-i18n="nav.instalacion">Instalacion</a></li>
+      <li><a href="#confianza" data-i18n="nav.confianza">Confianza</a></li>
+      <li><a href="#verificar" data-i18n="nav.verificar">Verificar</a></li>
     </ul>
-    <a class="btn btn-ghost nav-cta" href="https://github.com/Gabrululu/Cliq" target="_blank" rel="noopener">Ver en GitHub</a>
+    <div class="nav-right">
+      <button class="lang-toggle" id="lang-toggle" type="button" aria-label="Switch language / cambiar idioma">
+        <span data-i18n="nav.lang_toggle">EN</span>
+      </button>
+      <a class="btn btn-ghost nav-cta" href="https://github.com/Gabrululu/Cliq" target="_blank" rel="noopener" data-i18n="nav.github">Ver en GitHub</a>
+    </div>
   </div>
 </header>
 
 <main id="top">
   <section class="hero wrap">
     <div>
-      <span class="eyebrow">Terminal de cobro para tu negocio</span>
-      <h1>El cuaderno de ventas de tu negocio, ahora en dolares digitales</h1>
-      <p class="lede">CLIQ es una app para cobrar en dolares digitales (USD₮) desde el mostrador de cualquier comercio — tienda, taller, puesto de feria o local de servicios. Cada venta queda anotada y firmada como un recibo que nadie puede alterar, y todo sigue funcionando aunque se corte internet.</p>
+      <span class="eyebrow" data-i18n="hero.eyebrow">Terminal de cobro para tu negocio</span>
+      <h1 data-i18n="hero.h1">El cuaderno de ventas de tu negocio, ahora en dolares digitales</h1>
+      <p class="lede" data-i18n="hero.lede">CLIQ es una app para cobrar en dolares digitales (USD₮) desde el mostrador de cualquier comercio — tienda, taller, puesto de feria o local de servicios. Cada venta queda anotada y firmada como un recibo que nadie puede alterar, y todo sigue funcionando aunque se corte internet.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="#instalacion">Pruebalo ahora</a>
-        <a class="btn btn-ghost" href="#como-funciona">Como funciona</a>
+        <a class="btn btn-primary" href="#instalacion" data-i18n="hero.cta_primary">Pruebalo ahora</a>
+        <a class="btn btn-ghost" href="#como-funciona" data-i18n="hero.cta_secondary">Como funciona</a>
       </div>
-      <p class="hero-note">Proyecto para Aleph Hackathon 2026 · las llaves quedan en tus manos, no en un banco</p>
+      <p class="hero-note" data-i18n="hero.note">Proyecto para Aleph Hackathon 2026 · las llaves quedan en tus manos, no en un banco</p>
     </div>
     <div class="receipt-stage">
       <div class="receipt">
-        <span class="receipt-seal">FIRMADO</span>
+        <span class="receipt-seal" data-i18n="receipt.signed">FIRMADO</span>
         <div class="receipt-head">
           <span>CLIQ</span>
           <span class="tabular">#1042</span>
         </div>
-        <div class="receipt-title">Recibo de venta</div>
-        <div class="receipt-sub">Comercio El Sol · hoy, 15:45</div>
-        <div class="receipt-line"><span>Producto vendido</span><span class="tabular">3.20 USD₮</span></div>
-        <div class="receipt-line"><span>Servicio prestado</span><span class="tabular">2.10 USD₮</span></div>
-        <div class="receipt-line"><span>Fiado — Juan P.</span><span class="tabular">7.20 USD₮</span></div>
+        <div class="receipt-title" data-i18n="receipt.title">Recibo de venta</div>
+        <div class="receipt-sub" data-i18n="receipt.sub">Comercio El Sol · hoy, 15:45</div>
+        <div class="receipt-line"><span data-i18n="receipt.line1">Producto vendido</span><span class="tabular">3.20 USD₮</span></div>
+        <div class="receipt-line"><span data-i18n="receipt.line2">Servicio prestado</span><span class="tabular">2.10 USD₮</span></div>
+        <div class="receipt-line"><span data-i18n="receipt.line3">Fiado — Juan P.</span><span class="tabular">7.20 USD₮</span></div>
         <div class="receipt-total">
-          <span class="label">Total cobrado</span>
+          <span class="label" data-i18n="receipt.total_label">Total cobrado</span>
           <span class="amount tabular">12.50 USD₮</span>
         </div>
       </div>
@@ -564,21 +646,21 @@
 
   <section id="por-que" class="wrap">
     <div class="section-head">
-      <span class="eyebrow">Lo que ya sabes, sin lo que te complica</span>
-      <h2>Cobrar es la parte facil. Lo demas es lo que cansa.</h2>
+      <span class="eyebrow" data-i18n="problem.eyebrow">Lo que ya sabes, sin lo que te complica</span>
+      <h2 data-i18n="problem.h2">Cobrar es la parte facil. Lo demas es lo que cansa.</h2>
     </div>
     <div class="problem-grid">
       <div class="problem-item">
         <span class="num tabular">01</span>
-        <p><strong>Llevar la cuenta</strong> de quien pago, quien fia y cuanto vendiste en el dia, a mano o de memoria.</p>
+        <p data-i18n-html="problem.item1"><strong>Llevar la cuenta</strong> de quien pago, quien fia y cuanto vendiste en el dia, a mano o de memoria.</p>
       </div>
       <div class="problem-item">
         <span class="num tabular">02</span>
-        <p><strong>Confiar en un cuaderno</strong> que se puede perder, mojar, o donde cualquiera puede tachar un numero.</p>
+        <p data-i18n-html="problem.item2"><strong>Confiar en un cuaderno</strong> que se puede perder, mojar, o donde cualquiera puede tachar un numero.</p>
       </div>
       <div class="problem-item">
         <span class="num tabular">03</span>
-        <p><strong>Depender de internet</strong> o de un banco para algo tan simple como cobrar una venta.</p>
+        <p data-i18n-html="problem.item3"><strong>Depender de internet</strong> o de un banco para algo tan simple como cobrar una venta.</p>
       </div>
     </div>
   </section>
@@ -586,39 +668,39 @@
   <section id="que-hace" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Que te da CLIQ</span>
-        <h2>Todo lo que tu mostrador necesita, nada que no entiendas</h2>
+        <span class="eyebrow" data-i18n="features.eyebrow">Que te da CLIQ</span>
+        <h2 data-i18n="features.h2">Todo lo que tu mostrador necesita, nada que no entiendas</h2>
       </div>
       <div class="features">
         <div class="card">
           <span class="card-mark">$</span>
-          <h3>Cobra en dolares digitales</h3>
-          <p>Aceptas USD₮ directo en tu propia billetera. Las llaves son tuyas — nadie mas puede tocar esa plata.</p>
+          <h3 data-i18n="features.card1_h3">Cobra en dolares digitales</h3>
+          <p data-i18n="features.card1_p">Aceptas USD₮ directo en tu propia billetera. Las llaves son tuyas — nadie mas puede tocar esa plata.</p>
         </div>
         <div class="card">
           <span class="card-mark">⟳</span>
-          <h3>Funciona sin internet</h3>
-          <p>Anota la venta igual. Cuando vuelve la señal, o cuando otro local con la app esta cerca, todo se pone al dia solo.</p>
+          <h3 data-i18n="features.card2_h3">Funciona sin internet</h3>
+          <p data-i18n="features.card2_p">Anota la venta igual. Cuando vuelve la señal, o cuando otro local con la app esta cerca, todo se pone al dia solo.</p>
         </div>
         <div class="card">
           <span class="card-mark">✓</span>
-          <h3>Recibos que no se pueden falsificar</h3>
-          <p>Cada cobro queda firmado digitalmente, como un sello que nadie puede copiar, borrar ni cambiar despues.</p>
+          <h3 data-i18n="features.card3_h3">Recibos que no se pueden falsificar</h3>
+          <p data-i18n="features.card3_p">Cada cobro queda firmado digitalmente, como un sello que nadie puede copiar, borrar ni cambiar despues.</p>
         </div>
         <div class="card">
           <span class="card-mark">?</span>
-          <h3>Preguntale a tu negocio</h3>
-          <p>"¿Cuanto vendi hoy?", "¿quien me debe?" — te responde con tus propios datos, sin mandarlos a ningun servidor.</p>
+          <h3 data-i18n="features.card4_h3">Preguntale a tu negocio</h3>
+          <p data-i18n="features.card4_p">"¿Cuanto vendi hoy?", "¿quien me debe?" — te responde con tus propios datos, sin mandarlos a ningun servidor.</p>
         </div>
         <div class="card">
           <span class="card-mark">↻</span>
-          <h3>Se actualiza solo</h3>
-          <p>Las mejoras te llegan sin que tengas que hacer nada raro ni entender de tecnologia.</p>
+          <h3 data-i18n="features.card5_h3">Se actualiza solo</h3>
+          <p data-i18n="features.card5_p">Las mejoras te llegan sin que tengas que hacer nada raro ni entender de tecnologia.</p>
         </div>
         <div class="card">
           <span class="card-mark">⌂</span>
-          <h3>Es tuya, no de un tercero</h3>
-          <p>No hay una empresa en el medio que pueda cerrar, subir comisiones, o quedarse con tu historial de ventas.</p>
+          <h3 data-i18n="features.card6_h3">Es tuya, no de un tercero</h3>
+          <p data-i18n="features.card6_p">No hay una empresa en el medio que pueda cerrar, subir comisiones, o quedarse con tu historial de ventas.</p>
         </div>
       </div>
     </div>
@@ -626,25 +708,25 @@
 
   <section id="como-funciona" class="wrap">
     <div class="section-head">
-      <span class="eyebrow">De la venta al recibo</span>
-      <h2>Cuatro pasos, el tiempo que tarda un cliente en pagar</h2>
+      <span class="eyebrow" data-i18n="steps.eyebrow">De la venta al recibo</span>
+      <h2 data-i18n="steps.h2">Cuatro pasos, el tiempo que tarda un cliente en pagar</h2>
     </div>
     <div class="steps">
       <div class="step">
         <span class="step-num tabular">01</span>
-        <div><h3>Armas el cobro</h3><p>Cargas el monto y, si quieres, una nota — "corte de pelo", "fiado de Juan" — como en el cuaderno de siempre.</p></div>
+        <div><h3 data-i18n="steps.step1_h3">Armas el cobro</h3><p data-i18n="steps.step1_p">Cargas el monto y, si quieres, una nota — "corte de pelo", "fiado de Juan" — como en el cuaderno de siempre.</p></div>
       </div>
       <div class="step">
         <span class="step-num tabular">02</span>
-        <div><h3>El cliente paga</h3><p>Paga en dolares digitales desde su propio celular. Ves al toque cuanto entro y que comision de red se cobro, sin sorpresas.</p></div>
+        <div><h3 data-i18n="steps.step2_h3">El cliente paga</h3><p data-i18n="steps.step2_p">Paga en dolares digitales desde su propio celular. Ves al toque cuanto entro y que comision de red se cobro, sin sorpresas.</p></div>
       </div>
       <div class="step">
         <span class="step-num tabular">03</span>
-        <div><h3>Queda el recibo firmado</h3><p>La venta se guarda como un recibo firmado que nadie puede alterar despues, ni tu ni nadie mas.</p></div>
+        <div><h3 data-i18n="steps.step3_h3">Queda el recibo firmado</h3><p data-i18n="steps.step3_p">La venta se guarda como un recibo firmado que nadie puede alterar despues, ni tu ni nadie mas.</p></div>
       </div>
       <div class="step">
         <span class="step-num tabular">04</span>
-        <div><h3>Se sincroniza sola</h3><p>Si tienes mas de un dispositivo o local, se ponen de acuerdo entre ellos apenas se encuentran — con o sin internet de por medio.</p></div>
+        <div><h3 data-i18n="steps.step4_h3">Se sincroniza sola</h3><p data-i18n="steps.step4_p">Si tienes mas de un dispositivo o local, se ponen de acuerdo entre ellos apenas se encuentran — con o sin internet de por medio.</p></div>
       </div>
     </div>
   </section>
@@ -652,32 +734,55 @@
   <section id="instalacion">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Pruebalo en tu propia terminal</span>
-        <h2>Como empezar a usarlo</h2>
+        <span class="eyebrow" data-i18n="install.eyebrow">Pruebalo en tu propia terminal</span>
+        <h2 data-i18n="install.h2">Como empezar a usarlo</h2>
       </div>
-      <p class="install-note">CLIQ corre como una app de linea de comandos en tu propio dispositivo — no hay servidor que levantar ni cuenta que crear. Necesitas tener instalado <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> y <a href="https://pnpm.io" target="_blank" rel="noopener">pnpm</a>.</p>
+      <p class="install-note" data-i18n-html="install.note1">CLIQ corre como una app de linea de comandos en tu propio dispositivo — no hay servidor que levantar ni cuenta que crear. Necesitas tener instalado <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> y <a href="https://pnpm.io" target="_blank" rel="noopener">pnpm</a>.</p>
       <pre class="install-code"><code>git clone \
   https://github.com/Gabrululu/Cliq.git
-cd cliq
-pnpm add -g bare pear
+cd Cliq
+npm install -g bare pear
 pnpm install
 bare index.js init
 bare index.js help</code></pre>
-      <p class="install-note">Con eso ya tienes tu identidad de comercio creada y ves todos los comandos disponibles. Configurar la wallet para cobrar de verdad, crear facturas, verificar recibos y sincronizar entre dispositivos esta documentado paso a paso en el repositorio.</p>
+      <p class="install-note" data-i18n="install.note2">Con eso ya tienes tu identidad de comercio creada y ves todos los comandos disponibles. Configurar la wallet para cobrar de verdad, crear facturas, verificar recibos y sincronizar entre dispositivos esta documentado paso a paso en el repositorio.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="https://github.com/Gabrululu/Cliq#readme" target="_blank" rel="noopener">Ver la guia completa</a>
+        <a class="btn btn-primary" href="https://github.com/Gabrululu/Cliq#readme" target="_blank" rel="noopener" data-i18n="install.cta">Ver la guia completa</a>
       </div>
     </div>
   </section>
 
   <section id="confianza" class="trust">
     <div class="wrap">
-      <blockquote>“Tu plata, tus datos, tu negocio. Nadie mas tiene la llave.”</blockquote>
+      <blockquote data-i18n="trust.quote">“Tu plata, tus datos, tu negocio. Nadie mas tiene la llave.”</blockquote>
       <div class="trust-points">
-        <div><strong>Autocustodia</strong><span>Guardas las llaves de tu billetera. CLIQ no puede mover tu plata ni retenerla.</span></div>
-        <div><strong>Sin servidor central</strong><span>Tu historial de ventas vive en tus propios dispositivos, no en la nube de otro.</span></div>
-        <div><strong>Verificable</strong><span>Cualquier recibo se puede revisar y confirmar que nadie lo toco despues de emitido.</span></div>
-        <div><strong>Se instala y actualiza sola, de verdad</strong><span>Probado en vivo: se instala con un solo comando y una version nueva le llega sola a una copia ya instalada, sin tocar nada.</span></div>
+        <div><strong data-i18n="trust.point1_strong">Autocustodia</strong><span data-i18n="trust.point1_text">Guardas las llaves de tu billetera. CLIQ no puede mover tu plata ni retenerla.</span></div>
+        <div><strong data-i18n="trust.point2_strong">Sin servidor central</strong><span data-i18n="trust.point2_text">Tu historial de ventas vive en tus propios dispositivos, no en la nube de otro.</span></div>
+        <div><strong data-i18n="trust.point3_strong">Verificable</strong><span data-i18n="trust.point3_text">Cualquier recibo se puede revisar y confirmar que nadie lo toco despues de emitido.</span></div>
+        <div><strong data-i18n="trust.point4_strong">Se instala y actualiza sola, de verdad</strong><span data-i18n="trust.point4_text">Probado en vivo: se instala con un solo comando y una version nueva le llega sola a una copia ya instalada, sin tocar nada.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="verificar" class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-i18n="verify.eyebrow">Pruebalo en tu navegador</span>
+      <h2 data-i18n="verify.h2">Verifica un recibo, ahora mismo</h2>
+      <p class="lede" data-i18n="verify.lede">Pega el JSON de un recibo firmado por CLIQ y confirma su firma digital aca mismo, en tu navegador — nada se manda a ningun servidor. Cambia un solo caracter y la firma deja de coincidir.</p>
+    </div>
+    <div class="verify-panel">
+      <textarea id="verify-input" class="verify-input" spellcheck="false" data-i18n-placeholder="verify.placeholder" placeholder='Pega aca el JSON de un recibo (el que muestra &quot;merchant receipt show &lt;id&gt;&quot;)'></textarea>
+      <div class="verify-actions">
+        <button class="btn btn-primary" id="verify-btn" type="button" data-i18n="verify.btn">Verificar firma</button>
+        <button class="btn btn-ghost" id="verify-sample-btn" type="button" data-i18n="verify.sample_btn">Probar con un recibo real</button>
+      </div>
+      <div id="verify-result" class="verify-result" hidden>
+        <span class="verify-result-mark" id="verify-result-mark"></span>
+        <div class="verify-result-body">
+          <h4 id="verify-result-title"></h4>
+          <p id="verify-result-detail"></p>
+          <div class="verify-result-fields" id="verify-result-fields"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -685,10 +790,10 @@ bare index.js help</code></pre>
   <section class="cta-band">
     <div class="wrap">
       <div>
-        <span class="eyebrow">Un proyecto abierto</span>
-        <h2>Armado para el mostrador, no para la nube</h2>
+        <span class="eyebrow" data-i18n="cta.eyebrow">Un proyecto abierto</span>
+        <h2 data-i18n="cta.h2">Armado para el mostrador, no para la nube</h2>
       </div>
-      <a class="btn btn-primary" href="https://github.com/Gabrululu/Cliq" target="_blank" rel="noopener">Ver el proyecto en GitHub</a>
+      <a class="btn btn-primary" href="https://github.com/Gabrululu/Cliq" target="_blank" rel="noopener" data-i18n="cta.button">Ver el proyecto en GitHub</a>
     </div>
   </section>
 </main>
@@ -699,3 +804,1646 @@ bare index.js help</code></pre>
     <a href="https://github.com/Gabrululu/Cliq" target="_blank" rel="noopener">github.com/Gabrululu/Cliq</a>
   </div>
 </footer>
+
+<script>
+(function () {
+  'use strict'
+
+  var DICT = {
+    es: {
+      'nav.como_funciona': 'Como funciona',
+      'nav.por_que': 'Por que',
+      'nav.instalacion': 'Instalacion',
+      'nav.confianza': 'Confianza',
+      'nav.verificar': 'Verificar',
+      'nav.lang_toggle': 'EN',
+      'nav.github': 'Ver en GitHub',
+
+      'hero.eyebrow': 'Terminal de cobro para tu negocio',
+      'hero.h1': 'El cuaderno de ventas de tu negocio, ahora en dolares digitales',
+      'hero.lede': 'CLIQ es una app para cobrar en dolares digitales (USD₮) desde el mostrador de cualquier comercio — tienda, taller, puesto de feria o local de servicios. Cada venta queda anotada y firmada como un recibo que nadie puede alterar, y todo sigue funcionando aunque se corte internet.',
+      'hero.cta_primary': 'Pruebalo ahora',
+      'hero.cta_secondary': 'Como funciona',
+      'hero.note': 'Proyecto para Aleph Hackathon 2026 · las llaves quedan en tus manos, no en un banco',
+
+      'receipt.signed': 'FIRMADO',
+      'receipt.title': 'Recibo de venta',
+      'receipt.sub': 'Comercio El Sol · hoy, 15:45',
+      'receipt.line1': 'Producto vendido',
+      'receipt.line2': 'Servicio prestado',
+      'receipt.line3': 'Fiado — Juan P.',
+      'receipt.total_label': 'Total cobrado',
+
+      'problem.eyebrow': 'Lo que ya sabes, sin lo que te complica',
+      'problem.h2': 'Cobrar es la parte facil. Lo demas es lo que cansa.',
+      'problem.item1': '<strong>Llevar la cuenta</strong> de quien pago, quien fia y cuanto vendiste en el dia, a mano o de memoria.',
+      'problem.item2': '<strong>Confiar en un cuaderno</strong> que se puede perder, mojar, o donde cualquiera puede tachar un numero.',
+      'problem.item3': '<strong>Depender de internet</strong> o de un banco para algo tan simple como cobrar una venta.',
+
+      'features.eyebrow': 'Que te da CLIQ',
+      'features.h2': 'Todo lo que tu mostrador necesita, nada que no entiendas',
+      'features.card1_h3': 'Cobra en dolares digitales',
+      'features.card1_p': 'Aceptas USD₮ directo en tu propia billetera. Las llaves son tuyas — nadie mas puede tocar esa plata.',
+      'features.card2_h3': 'Funciona sin internet',
+      'features.card2_p': 'Anota la venta igual. Cuando vuelve la señal, o cuando otro local con la app esta cerca, todo se pone al dia solo.',
+      'features.card3_h3': 'Recibos que no se pueden falsificar',
+      'features.card3_p': 'Cada cobro queda firmado digitalmente, como un sello que nadie puede copiar, borrar ni cambiar despues.',
+      'features.card4_h3': 'Preguntale a tu negocio',
+      'features.card4_p': '"¿Cuanto vendi hoy?", "¿quien me debe?" — te responde con tus propios datos, sin mandarlos a ningun servidor.',
+      'features.card5_h3': 'Se actualiza solo',
+      'features.card5_p': 'Las mejoras te llegan sin que tengas que hacer nada raro ni entender de tecnologia.',
+      'features.card6_h3': 'Es tuya, no de un tercero',
+      'features.card6_p': 'No hay una empresa en el medio que pueda cerrar, subir comisiones, o quedarse con tu historial de ventas.',
+
+      'steps.eyebrow': 'De la venta al recibo',
+      'steps.h2': 'Cuatro pasos, el tiempo que tarda un cliente en pagar',
+      'steps.step1_h3': 'Armas el cobro',
+      'steps.step1_p': 'Cargas el monto y, si quieres, una nota — "corte de pelo", "fiado de Juan" — como en el cuaderno de siempre.',
+      'steps.step2_h3': 'El cliente paga',
+      'steps.step2_p': 'Paga en dolares digitales desde su propio celular. Ves al toque cuanto entro y que comision de red se cobro, sin sorpresas.',
+      'steps.step3_h3': 'Queda el recibo firmado',
+      'steps.step3_p': 'La venta se guarda como un recibo firmado que nadie puede alterar despues, ni tu ni nadie mas.',
+      'steps.step4_h3': 'Se sincroniza sola',
+      'steps.step4_p': 'Si tienes mas de un dispositivo o local, se ponen de acuerdo entre ellos apenas se encuentran — con o sin internet de por medio.',
+
+      'install.eyebrow': 'Pruebalo en tu propia terminal',
+      'install.h2': 'Como empezar a usarlo',
+      'install.note1': 'CLIQ corre como una app de linea de comandos en tu propio dispositivo — no hay servidor que levantar ni cuenta que crear. Necesitas tener instalado <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> y <a href="https://pnpm.io" target="_blank" rel="noopener">pnpm</a>.',
+      'install.note2': 'Con eso ya tienes tu identidad de comercio creada y ves todos los comandos disponibles. Configurar la wallet para cobrar de verdad, crear facturas, verificar recibos y sincronizar entre dispositivos esta documentado paso a paso en el repositorio.',
+      'install.cta': 'Ver la guia completa',
+
+      'trust.quote': '“Tu plata, tus datos, tu negocio. Nadie mas tiene la llave.”',
+      'trust.point1_strong': 'Autocustodia',
+      'trust.point1_text': 'Guardas las llaves de tu billetera. CLIQ no puede mover tu plata ni retenerla.',
+      'trust.point2_strong': 'Sin servidor central',
+      'trust.point2_text': 'Tu historial de ventas vive en tus propios dispositivos, no en la nube de otro.',
+      'trust.point3_strong': 'Verificable',
+      'trust.point3_text': 'Cualquier recibo se puede revisar y confirmar que nadie lo toco despues de emitido.',
+      'trust.point4_strong': 'Se instala y actualiza sola, de verdad',
+      'trust.point4_text': 'Probado en vivo: se instala con un solo comando y una version nueva le llega sola a una copia ya instalada, sin tocar nada.',
+
+      'verify.eyebrow': 'Pruebalo en tu navegador',
+      'verify.h2': 'Verifica un recibo, ahora mismo',
+      'verify.lede': 'Pega el JSON de un recibo firmado por CLIQ y confirma su firma digital aca mismo, en tu navegador — nada se manda a ningun servidor. Cambia un solo caracter y la firma deja de coincidir.',
+      'verify.placeholder': 'Pega aca el JSON de un recibo (el que muestra "merchant receipt show <id>")',
+      'verify.btn': 'Verificar firma',
+      'verify.sample_btn': 'Probar con un recibo real',
+
+      'cta.eyebrow': 'Un proyecto abierto',
+      'cta.h2': 'Armado para el mostrador, no para la nube',
+      'cta.button': 'Ver el proyecto en GitHub',
+
+      'verify.result.empty_title': 'Pega un recibo primero',
+      'verify.result.empty_detail': 'Copia el JSON completo de un recibo (por ejemplo, la salida de "merchant receipt show <id>") en el recuadro de arriba.',
+      'verify.result.bad_json_title': 'Eso no es JSON valido',
+      'verify.result.bad_json_detail': 'Revisa que hayas copiado el objeto completo, con las llaves { } incluidas.',
+      'verify.result.not_receipt_title': 'Eso no es un recibo',
+      'verify.result.not_receipt_detail': 'Se espera un objeto JSON con los campos de un evento del libro mayor de CLIQ.',
+      'verify.result.missing_fields_title': 'Faltan campos',
+      'verify.result.missing_fields_detail': 'Un recibo de CLIQ necesita al menos "signature" (la firma) y "merchant" (la clave publica del comercio).',
+      'verify.result.bad_sig_title': '"signature" invalida',
+      'verify.result.bad_sig_detail': 'Tiene que ser un hex de 64 bytes (128 caracteres) - la firma Ed25519 completa.',
+      'verify.result.bad_pub_title': '"merchant" invalido',
+      'verify.result.bad_pub_detail': 'Tiene que ser un hex de 32 bytes (64 caracteres) - la clave publica del comercio.',
+      'verify.result.process_error_title': 'No se pudo procesar el recibo',
+      'verify.result.verify_error_title': 'Error verificando la firma',
+      'verify.result.valid_title': 'Firma valida',
+      'verify.result.valid_detail': 'Este recibo fue firmado por la clave publica indicada y ningun campo cambio desde que se firmo.',
+      'verify.result.invalid_title': 'Firma invalida',
+      'verify.result.invalid_detail': 'El contenido no coincide con la firma: se altero algun campo despues de firmarlo, o la firma no corresponde a esta clave publica.',
+      'verify.fields.invoice': 'Factura',
+      'verify.fields.amount': 'Monto',
+      'verify.fields.merchant': 'Comercio (clave publica)',
+      'verify.fields.tx': 'Transaccion'
+    },
+    en: {
+      'nav.como_funciona': 'How it works',
+      'nav.por_que': 'Why',
+      'nav.instalacion': 'Install',
+      'nav.confianza': 'Trust',
+      'nav.verificar': 'Verify',
+      'nav.lang_toggle': 'ES',
+      'nav.github': 'View on GitHub',
+
+      'hero.eyebrow': 'Payment terminal for your business',
+      'hero.h1': 'Your sales notebook, now in digital dollars',
+      'hero.lede': 'CLIQ is an app for charging in digital dollars (USD₮) from the counter of any business — shop, workshop, market stall, or service provider. Every sale gets recorded and signed as a receipt nobody can alter, and everything keeps working even if the internet goes down.',
+      'hero.cta_primary': 'Try it now',
+      'hero.cta_secondary': 'How it works',
+      'hero.note': "Project for Aleph Hackathon 2026 · the keys stay in your hands, not a bank's",
+
+      'receipt.signed': 'SIGNED',
+      'receipt.title': 'Sale receipt',
+      'receipt.sub': 'El Sol Store · today, 3:45 PM',
+      'receipt.line1': 'Product sold',
+      'receipt.line2': 'Service rendered',
+      'receipt.line3': 'On credit — Juan P.',
+      'receipt.total_label': 'Total charged',
+
+      'problem.eyebrow': "What you already know, without the hassle",
+      'problem.h2': 'Getting paid is the easy part. Everything else is what wears you down.',
+      'problem.item1': '<strong>Keeping track</strong> of who paid, who owes you, and how much you sold today, by hand or from memory.',
+      'problem.item2': '<strong>Trusting a notebook</strong> that can get lost, get wet, or where anyone can cross out a number.',
+      'problem.item3': '<strong>Depending on internet</strong> or a bank for something as simple as charging for a sale.',
+
+      'features.eyebrow': 'What CLIQ gives you',
+      'features.h2': "Everything your counter needs, nothing you won't understand",
+      'features.card1_h3': 'Charge in digital dollars',
+      'features.card1_p': 'Accept USD₮ straight into your own wallet. The keys are yours — nobody else can touch that money.',
+      'features.card2_h3': 'Works without internet',
+      'features.card2_p': "Record the sale anyway. Once the signal is back, or another store with the app is nearby, everything catches up on its own.",
+      'features.card3_h3': "Receipts that can't be forged",
+      'features.card3_p': 'Every charge gets digitally signed, like a seal nobody can copy, erase, or change afterward.',
+      'features.card4_h3': 'Ask your business questions',
+      'features.card4_p': '"How much did I sell today?", "who owes me?" — it answers with your own data, without sending it to any server.',
+      'features.card5_h3': 'Updates itself',
+      'features.card5_p': 'Improvements reach you without you having to do anything strange or understand any technology.',
+      'features.card6_h3': "It's yours, not a third party's",
+      'features.card6_p': "There's no company in the middle that can shut down, raise fees, or keep your sales history.",
+
+      'steps.eyebrow': 'From the sale to the receipt',
+      'steps.h2': 'Four steps, about as long as it takes a customer to pay',
+      'steps.step1_h3': 'You set up the charge',
+      'steps.step1_p': 'Enter the amount and, if you want, a note — "haircut", "Juan\'s tab" — just like in the usual notebook.',
+      'steps.step2_h3': 'The customer pays',
+      'steps.step2_p': 'They pay in digital dollars from their own phone. You see instantly how much came in and what network fee was charged, no surprises.',
+      'steps.step3_h3': 'The signed receipt is created',
+      'steps.step3_p': 'The sale gets stored as a signed receipt that nobody can alter afterward, not even you.',
+      'steps.step4_h3': 'It syncs on its own',
+      'steps.step4_p': 'If you have more than one device or location, they agree with each other as soon as they find one another — with or without internet in between.',
+
+      'install.eyebrow': 'Try it in your own terminal',
+      'install.h2': 'How to get started',
+      'install.note1': 'CLIQ runs as a command-line app on your own device — no server to spin up, no account to create. You need <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a> and <a href="https://pnpm.io" target="_blank" rel="noopener">pnpm</a> installed.',
+      'install.note2': 'With that, your merchant identity is already created and you can see every available command. Setting up the wallet to actually charge, creating invoices, verifying receipts, and syncing between devices is documented step by step in the repository.',
+      'install.cta': 'See the full guide',
+
+      'trust.quote': '“Your money, your data, your business. Nobody else holds the key.”',
+      'trust.point1_strong': 'Self-custody',
+      'trust.point1_text': "You hold your wallet's keys. CLIQ can't move or hold your money.",
+      'trust.point2_strong': 'No central server',
+      'trust.point2_text': "Your sales history lives on your own devices, not someone else's cloud.",
+      'trust.point3_strong': 'Verifiable',
+      'trust.point3_text': 'Any receipt can be checked to confirm nobody touched it after it was issued.',
+      'trust.point4_strong': 'Really does install and update itself',
+      'trust.point4_text': 'Proven live: it installs with a single command, and a new version reaches an already-installed copy on its own, no action needed.',
+
+      'verify.eyebrow': 'Try it in your browser',
+      'verify.h2': 'Verify a receipt, right now',
+      'verify.lede': 'Paste the JSON of a receipt signed by CLIQ and confirm its digital signature right here, in your browser — nothing gets sent to any server. Change a single character and the signature stops matching.',
+      'verify.placeholder': 'Paste a receipt\'s JSON here (the one shown by "merchant receipt show <id>")',
+      'verify.btn': 'Verify signature',
+      'verify.sample_btn': 'Try with a real receipt',
+
+      'cta.eyebrow': 'An open project',
+      'cta.h2': 'Built for the counter, not the cloud',
+      'cta.button': 'View the project on GitHub',
+
+      'verify.result.empty_title': 'Paste a receipt first',
+      'verify.result.empty_detail': 'Copy the full JSON of a receipt (for example, the output of "merchant receipt show <id>") into the box above.',
+      'verify.result.bad_json_title': "That's not valid JSON",
+      'verify.result.bad_json_detail': 'Check that you copied the whole object, braces { } included.',
+      'verify.result.not_receipt_title': "That's not a receipt",
+      'verify.result.not_receipt_detail': 'A JSON object with the fields of a CLIQ ledger event is expected.',
+      'verify.result.missing_fields_title': 'Missing fields',
+      'verify.result.missing_fields_detail': 'A CLIQ receipt needs at least "signature" (the signature) and "merchant" (the merchant\'s public key).',
+      'verify.result.bad_sig_title': 'Invalid "signature"',
+      'verify.result.bad_sig_detail': 'It has to be a 64-byte hex string (128 characters) — the full Ed25519 signature.',
+      'verify.result.bad_pub_title': 'Invalid "merchant"',
+      'verify.result.bad_pub_detail': "It has to be a 32-byte hex string (64 characters) — the merchant's public key.",
+      'verify.result.process_error_title': "Couldn't process the receipt",
+      'verify.result.verify_error_title': 'Error verifying the signature',
+      'verify.result.valid_title': 'Valid signature',
+      'verify.result.valid_detail': 'This receipt was signed by the public key shown and no field has changed since it was signed.',
+      'verify.result.invalid_title': 'Invalid signature',
+      'verify.result.invalid_detail': "The content doesn't match the signature: either a field was altered after signing, or the signature doesn't correspond to this public key.",
+      'verify.fields.invoice': 'Invoice',
+      'verify.fields.amount': 'Amount',
+      'verify.fields.merchant': 'Merchant (public key)',
+      'verify.fields.tx': 'Transaction'
+    }
+  }
+
+  var STORAGE_KEY = 'cliq-lang'
+  var current = 'es'
+
+  function t (key) {
+    var table = DICT[current] || DICT.es
+    return table[key] != null ? table[key] : key
+  }
+
+  function applyLanguage () {
+    document.documentElement.setAttribute('lang', current)
+
+    var textNodes = document.querySelectorAll('[data-i18n]')
+    for (var i = 0; i < textNodes.length; i++) {
+      var el = textNodes[i]
+      el.textContent = t(el.getAttribute('data-i18n'))
+    }
+
+    var htmlNodes = document.querySelectorAll('[data-i18n-html]')
+    for (var j = 0; j < htmlNodes.length; j++) {
+      var el2 = htmlNodes[j]
+      el2.innerHTML = t(el2.getAttribute('data-i18n-html'))
+    }
+
+    var placeholderNodes = document.querySelectorAll('[data-i18n-placeholder]')
+    for (var k = 0; k < placeholderNodes.length; k++) {
+      var el3 = placeholderNodes[k]
+      el3.setAttribute('placeholder', t(el3.getAttribute('data-i18n-placeholder')))
+    }
+
+    document.dispatchEvent(new CustomEvent('cliq:language-changed', { detail: { lang: current } }))
+  }
+
+  function setLanguage (lang) {
+    current = (lang === 'en') ? 'en' : 'es'
+    try { window.localStorage.setItem(STORAGE_KEY, current) } catch (err) {}
+    applyLanguage()
+  }
+
+  var stored = null
+  try { stored = window.localStorage.getItem(STORAGE_KEY) } catch (err) {}
+  current = (stored === 'en' || stored === 'es') ? stored : 'es'
+
+  window.CLIQ_I18N = { t: t, setLanguage: setLanguage, getLanguage: function () { return current } }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    applyLanguage()
+    var toggle = document.getElementById('lang-toggle')
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        setLanguage(current === 'es' ? 'en' : 'es')
+      })
+    }
+  })
+})()
+</script>
+<script>
+/* tweetnacl.js v1.0.2 (public domain) -- https://github.com/dchest/tweetnacl-js
+   Embedded inline so the receipt verifier below works fully offline and
+   entirely client-side, with no external script dependency for a
+   security-sensitive feature. Byte-identical to the tweetnacl@1.0.3 npm
+   package and the v1.0.2 GitHub release tag (cross-checked before embedding). */
+(function(nacl) {
+'use strict';
+
+// Ported in 2014 by Dmitry Chestnykh and Devi Mandiri.
+// Public domain.
+//
+// Implementation derived from TweetNaCl version 20140427.
+// See for details: http://tweetnacl.cr.yp.to/
+
+var u64 = function(h, l) { this.hi = h|0 >>> 0; this.lo = l|0 >>> 0; };
+var gf = function(init) {
+  var i, r = new Float64Array(16);
+  if (init) for (i = 0; i < init.length; i++) r[i] = init[i];
+  return r;
+};
+
+//  Pluggable, initialized in high-level API below.
+var randombytes = function(/* x, n */) { throw new Error('no PRNG'); };
+
+var _0 = new Uint8Array(16);
+var _9 = new Uint8Array(32); _9[0] = 9;
+
+var gf0 = gf(),
+    gf1 = gf([1]),
+    _121665 = gf([0xdb41, 1]),
+    D = gf([0x78a3, 0x1359, 0x4dca, 0x75eb, 0xd8ab, 0x4141, 0x0a4d, 0x0070, 0xe898, 0x7779, 0x4079, 0x8cc7, 0xfe73, 0x2b6f, 0x6cee, 0x5203]),
+    D2 = gf([0xf159, 0x26b2, 0x9b94, 0xebd6, 0xb156, 0x8283, 0x149a, 0x00e0, 0xd130, 0xeef3, 0x80f2, 0x198e, 0xfce7, 0x56df, 0xd9dc, 0x2406]),
+    X = gf([0xd51a, 0x8f25, 0x2d60, 0xc956, 0xa7b2, 0x9525, 0xc760, 0x692c, 0xdc5c, 0xfdd6, 0xe231, 0xc0a4, 0x53fe, 0xcd6e, 0x36d3, 0x2169]),
+    Y = gf([0x6658, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666]),
+    I = gf([0xa0b0, 0x4a0e, 0x1b27, 0xc4ee, 0xe478, 0xad2f, 0x1806, 0x2f43, 0xd7a7, 0x3dfb, 0x0099, 0x2b4d, 0xdf0b, 0x4fc1, 0x2480, 0x2b83]);
+
+function L32(x, c) { return (x << c) | (x >>> (32 - c)); }
+
+function ld32(x, i) {
+  var u = x[i+3] & 0xff;
+  u = (u<<8)|(x[i+2] & 0xff);
+  u = (u<<8)|(x[i+1] & 0xff);
+  return (u<<8)|(x[i+0] & 0xff);
+}
+
+function dl64(x, i) {
+  var h = (x[i] << 24) | (x[i+1] << 16) | (x[i+2] << 8) | x[i+3];
+  var l = (x[i+4] << 24) | (x[i+5] << 16) | (x[i+6] << 8) | x[i+7];
+  return new u64(h, l);
+}
+
+function st32(x, j, u) {
+  var i;
+  for (i = 0; i < 4; i++) { x[j+i] = u & 255; u >>>= 8; }
+}
+
+function ts64(x, i, u) {
+  x[i]   = (u.hi >> 24) & 0xff;
+  x[i+1] = (u.hi >> 16) & 0xff;
+  x[i+2] = (u.hi >>  8) & 0xff;
+  x[i+3] = u.hi & 0xff;
+  x[i+4] = (u.lo >> 24)  & 0xff;
+  x[i+5] = (u.lo >> 16)  & 0xff;
+  x[i+6] = (u.lo >>  8)  & 0xff;
+  x[i+7] = u.lo & 0xff;
+}
+
+function vn(x, xi, y, yi, n) {
+  var i,d = 0;
+  for (i = 0; i < n; i++) d |= x[xi+i]^y[yi+i];
+  return (1 & ((d - 1) >>> 8)) - 1;
+}
+
+function crypto_verify_16(x, xi, y, yi) {
+  return vn(x,xi,y,yi,16);
+}
+
+function crypto_verify_32(x, xi, y, yi) {
+  return vn(x,xi,y,yi,32);
+}
+
+function core(out,inp,k,c,h) {
+  var w = new Uint32Array(16), x = new Uint32Array(16),
+      y = new Uint32Array(16), t = new Uint32Array(4);
+  var i, j, m;
+
+  for (i = 0; i < 4; i++) {
+    x[5*i] = ld32(c, 4*i);
+    x[1+i] = ld32(k, 4*i);
+    x[6+i] = ld32(inp, 4*i);
+    x[11+i] = ld32(k, 16+4*i);
+  }
+
+  for (i = 0; i < 16; i++) y[i] = x[i];
+
+  for (i = 0; i < 20; i++) {
+    for (j = 0; j < 4; j++) {
+      for (m = 0; m < 4; m++) t[m] = x[(5*j+4*m)%16];
+      t[1] ^= L32((t[0]+t[3])|0, 7);
+      t[2] ^= L32((t[1]+t[0])|0, 9);
+      t[3] ^= L32((t[2]+t[1])|0,13);
+      t[0] ^= L32((t[3]+t[2])|0,18);
+      for (m = 0; m < 4; m++) w[4*j+(j+m)%4] = t[m];
+    }
+    for (m = 0; m < 16; m++) x[m] = w[m];
+  }
+
+  if (h) {
+    for (i = 0; i < 16; i++) x[i] = (x[i] + y[i]) | 0;
+    for (i = 0; i < 4; i++) {
+      x[5*i] = (x[5*i] - ld32(c, 4*i)) | 0;
+      x[6+i] = (x[6+i] - ld32(inp, 4*i)) | 0;
+    }
+    for (i = 0; i < 4; i++) {
+      st32(out,4*i,x[5*i]);
+      st32(out,16+4*i,x[6+i]);
+    }
+  } else {
+    for (i = 0; i < 16; i++) st32(out, 4 * i, (x[i] + y[i]) | 0);
+  }
+}
+
+function crypto_core_salsa20(out,inp,k,c) {
+  core(out,inp,k,c,false);
+  return 0;
+}
+
+function crypto_core_hsalsa20(out,inp,k,c) {
+  core(out,inp,k,c,true);
+  return 0;
+}
+
+var sigma = new Uint8Array([101, 120, 112, 97, 110, 100, 32, 51, 50, 45, 98, 121, 116, 101, 32, 107]);
+            // "expand 32-byte k"
+
+function crypto_stream_salsa20_xor(c,cpos,m,mpos,b,n,k) {
+  var z = new Uint8Array(16), x = new Uint8Array(64);
+  var u, i;
+  if (!b) return 0;
+  for (i = 0; i < 16; i++) z[i] = 0;
+  for (i = 0; i < 8; i++) z[i] = n[i];
+  while (b >= 64) {
+    crypto_core_salsa20(x,z,k,sigma);
+    for (i = 0; i < 64; i++) c[cpos+i] = (m?m[mpos+i]:0) ^ x[i];
+    u = 1;
+    for (i = 8; i < 16; i++) {
+      u = u + (z[i] & 0xff) | 0;
+      z[i] = u & 0xff;
+      u >>>= 8;
+    }
+    b -= 64;
+    cpos += 64;
+    if (m) mpos += 64;
+  }
+  if (b > 0) {
+    crypto_core_salsa20(x,z,k,sigma);
+    for (i = 0; i < b; i++) c[cpos+i] = (m?m[mpos+i]:0) ^ x[i];
+  }
+  return 0;
+}
+
+function crypto_stream_salsa20(c,cpos,d,n,k) {
+  return crypto_stream_salsa20_xor(c,cpos,null,0,d,n,k);
+}
+
+function crypto_stream(c,cpos,d,n,k) {
+  var s = new Uint8Array(32);
+  crypto_core_hsalsa20(s,n,k,sigma);
+  return crypto_stream_salsa20(c,cpos,d,n.subarray(16),s);
+}
+
+function crypto_stream_xor(c,cpos,m,mpos,d,n,k) {
+  var s = new Uint8Array(32);
+  crypto_core_hsalsa20(s,n,k,sigma);
+  return crypto_stream_salsa20_xor(c,cpos,m,mpos,d,n.subarray(16),s);
+}
+
+function add1305(h, c) {
+  var j, u = 0;
+  for (j = 0; j < 17; j++) {
+    u = (u + ((h[j] + c[j]) | 0)) | 0;
+    h[j] = u & 255;
+    u >>>= 8;
+  }
+}
+
+var minusp = new Uint32Array([
+  5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 252
+]);
+
+function crypto_onetimeauth(out, outpos, m, mpos, n, k) {
+  var s, i, j, u;
+  var x = new Uint32Array(17), r = new Uint32Array(17),
+      h = new Uint32Array(17), c = new Uint32Array(17),
+      g = new Uint32Array(17);
+  for (j = 0; j < 17; j++) r[j]=h[j]=0;
+  for (j = 0; j < 16; j++) r[j]=k[j];
+  r[3]&=15;
+  r[4]&=252;
+  r[7]&=15;
+  r[8]&=252;
+  r[11]&=15;
+  r[12]&=252;
+  r[15]&=15;
+
+  while (n > 0) {
+    for (j = 0; j < 17; j++) c[j] = 0;
+    for (j = 0; (j < 16) && (j < n); ++j) c[j] = m[mpos+j];
+    c[j] = 1;
+    mpos += j; n -= j;
+    add1305(h,c);
+    for (i = 0; i < 17; i++) {
+      x[i] = 0;
+      for (j = 0; j < 17; j++) x[i] = (x[i] + (h[j] * ((j <= i) ? r[i - j] : ((320 * r[i + 17 - j])|0))) | 0) | 0;
+    }
+    for (i = 0; i < 17; i++) h[i] = x[i];
+    u = 0;
+    for (j = 0; j < 16; j++) {
+      u = (u + h[j]) | 0;
+      h[j] = u & 255;
+      u >>>= 8;
+    }
+    u = (u + h[16]) | 0; h[16] = u & 3;
+    u = (5 * (u >>> 2)) | 0;
+    for (j = 0; j < 16; j++) {
+      u = (u + h[j]) | 0;
+      h[j] = u & 255;
+      u >>>= 8;
+    }
+    u = (u + h[16]) | 0; h[16] = u;
+  }
+
+  for (j = 0; j < 17; j++) g[j] = h[j];
+  add1305(h,minusp);
+  s = (-(h[16] >>> 7) | 0);
+  for (j = 0; j < 17; j++) h[j] ^= s & (g[j] ^ h[j]);
+
+  for (j = 0; j < 16; j++) c[j] = k[j + 16];
+  c[16] = 0;
+  add1305(h,c);
+  for (j = 0; j < 16; j++) out[outpos+j] = h[j];
+  return 0;
+}
+
+function crypto_onetimeauth_verify(h, hpos, m, mpos, n, k) {
+  var x = new Uint8Array(16);
+  crypto_onetimeauth(x,0,m,mpos,n,k);
+  return crypto_verify_16(h,hpos,x,0);
+}
+
+function crypto_secretbox(c,m,d,n,k) {
+  var i;
+  if (d < 32) return -1;
+  crypto_stream_xor(c,0,m,0,d,n,k);
+  crypto_onetimeauth(c, 16, c, 32, d - 32, c);
+  for (i = 0; i < 16; i++) c[i] = 0;
+  return 0;
+}
+
+function crypto_secretbox_open(m,c,d,n,k) {
+  var i;
+  var x = new Uint8Array(32);
+  if (d < 32) return -1;
+  crypto_stream(x,0,32,n,k);
+  if (crypto_onetimeauth_verify(c, 16,c, 32,d - 32,x) !== 0) return -1;
+  crypto_stream_xor(m,0,c,0,d,n,k);
+  for (i = 0; i < 32; i++) m[i] = 0;
+  return 0;
+}
+
+function set25519(r, a) {
+  var i;
+  for (i = 0; i < 16; i++) r[i] = a[i]|0;
+}
+
+function car25519(o) {
+  var c;
+  var i;
+  for (i = 0; i < 16; i++) {
+      o[i] += 65536;
+      c = Math.floor(o[i] / 65536);
+      o[(i+1)*(i<15?1:0)] += c - 1 + 37 * (c-1) * (i===15?1:0);
+      o[i] -= (c * 65536);
+  }
+}
+
+function sel25519(p, q, b) {
+  var t, c = ~(b-1);
+  for (var i = 0; i < 16; i++) {
+    t = c & (p[i] ^ q[i]);
+    p[i] ^= t;
+    q[i] ^= t;
+  }
+}
+
+function pack25519(o, n) {
+  var i, j, b;
+  var m = gf(), t = gf();
+  for (i = 0; i < 16; i++) t[i] = n[i];
+  car25519(t);
+  car25519(t);
+  car25519(t);
+  for (j = 0; j < 2; j++) {
+    m[0] = t[0] - 0xffed;
+    for (i = 1; i < 15; i++) {
+      m[i] = t[i] - 0xffff - ((m[i-1]>>16) & 1);
+      m[i-1] &= 0xffff;
+    }
+    m[15] = t[15] - 0x7fff - ((m[14]>>16) & 1);
+    b = (m[15]>>16) & 1;
+    m[14] &= 0xffff;
+    sel25519(t, m, 1-b);
+  }
+  for (i = 0; i < 16; i++) {
+    o[2*i] = t[i] & 0xff;
+    o[2*i+1] = t[i]>>8;
+  }
+}
+
+function neq25519(a, b) {
+  var c = new Uint8Array(32), d = new Uint8Array(32);
+  pack25519(c, a);
+  pack25519(d, b);
+  return crypto_verify_32(c, 0, d, 0);
+}
+
+function par25519(a) {
+  var d = new Uint8Array(32);
+  pack25519(d, a);
+  return d[0] & 1;
+}
+
+function unpack25519(o, n) {
+  var i;
+  for (i = 0; i < 16; i++) o[i] = n[2*i] + (n[2*i+1] << 8);
+  o[15] &= 0x7fff;
+}
+
+function A(o, a, b) {
+  var i;
+  for (i = 0; i < 16; i++) o[i] = (a[i] + b[i])|0;
+}
+
+function Z(o, a, b) {
+  var i;
+  for (i = 0; i < 16; i++) o[i] = (a[i] - b[i])|0;
+}
+
+function M(o, a, b) {
+  var i, j, t = new Float64Array(31);
+  for (i = 0; i < 31; i++) t[i] = 0;
+  for (i = 0; i < 16; i++) {
+    for (j = 0; j < 16; j++) {
+      t[i+j] += a[i] * b[j];
+    }
+  }
+  for (i = 0; i < 15; i++) {
+    t[i] += 38 * t[i+16];
+  }
+  for (i = 0; i < 16; i++) o[i] = t[i];
+  car25519(o);
+  car25519(o);
+}
+
+function S(o, a) {
+  M(o, a, a);
+}
+
+function inv25519(o, i) {
+  var c = gf();
+  var a;
+  for (a = 0; a < 16; a++) c[a] = i[a];
+  for (a = 253; a >= 0; a--) {
+    S(c, c);
+    if(a !== 2 && a !== 4) M(c, c, i);
+  }
+  for (a = 0; a < 16; a++) o[a] = c[a];
+}
+
+function pow2523(o, i) {
+  var c = gf();
+  var a;
+  for (a = 0; a < 16; a++) c[a] = i[a];
+  for (a = 250; a >= 0; a--) {
+      S(c, c);
+      if(a !== 1) M(c, c, i);
+  }
+  for (a = 0; a < 16; a++) o[a] = c[a];
+}
+
+function crypto_scalarmult(q, n, p) {
+  var z = new Uint8Array(32);
+  var x = new Float64Array(80), r, i;
+  var a = gf(), b = gf(), c = gf(),
+      d = gf(), e = gf(), f = gf();
+  for (i = 0; i < 31; i++) z[i] = n[i];
+  z[31]=(n[31]&127)|64;
+  z[0]&=248;
+  unpack25519(x,p);
+  for (i = 0; i < 16; i++) {
+    b[i]=x[i];
+    d[i]=a[i]=c[i]=0;
+  }
+  a[0]=d[0]=1;
+  for (i=254; i>=0; --i) {
+    r=(z[i>>>3]>>>(i&7))&1;
+    sel25519(a,b,r);
+    sel25519(c,d,r);
+    A(e,a,c);
+    Z(a,a,c);
+    A(c,b,d);
+    Z(b,b,d);
+    S(d,e);
+    S(f,a);
+    M(a,c,a);
+    M(c,b,e);
+    A(e,a,c);
+    Z(a,a,c);
+    S(b,a);
+    Z(c,d,f);
+    M(a,c,_121665);
+    A(a,a,d);
+    M(c,c,a);
+    M(a,d,f);
+    M(d,b,x);
+    S(b,e);
+    sel25519(a,b,r);
+    sel25519(c,d,r);
+  }
+  for (i = 0; i < 16; i++) {
+    x[i+16]=a[i];
+    x[i+32]=c[i];
+    x[i+48]=b[i];
+    x[i+64]=d[i];
+  }
+  var x32 = x.subarray(32);
+  var x16 = x.subarray(16);
+  inv25519(x32,x32);
+  M(x16,x16,x32);
+  pack25519(q,x16);
+  return 0;
+}
+
+function crypto_scalarmult_base(q, n) {
+  return crypto_scalarmult(q, n, _9);
+}
+
+function crypto_box_keypair(y, x) {
+  randombytes(x, 32);
+  return crypto_scalarmult_base(y, x);
+}
+
+function crypto_box_beforenm(k, y, x) {
+  var s = new Uint8Array(32);
+  crypto_scalarmult(s, x, y);
+  return crypto_core_hsalsa20(k, _0, s, sigma);
+}
+
+var crypto_box_afternm = crypto_secretbox;
+var crypto_box_open_afternm = crypto_secretbox_open;
+
+function crypto_box(c, m, d, n, y, x) {
+  var k = new Uint8Array(32);
+  crypto_box_beforenm(k, y, x);
+  return crypto_box_afternm(c, m, d, n, k);
+}
+
+function crypto_box_open(m, c, d, n, y, x) {
+  var k = new Uint8Array(32);
+  crypto_box_beforenm(k, y, x);
+  return crypto_box_open_afternm(m, c, d, n, k);
+}
+
+function add64() {
+  var a = 0, b = 0, c = 0, d = 0, m16 = 65535, l, h, i;
+  for (i = 0; i < arguments.length; i++) {
+    l = arguments[i].lo;
+    h = arguments[i].hi;
+    a += (l & m16); b += (l >>> 16);
+    c += (h & m16); d += (h >>> 16);
+  }
+
+  b += (a >>> 16);
+  c += (b >>> 16);
+  d += (c >>> 16);
+
+  return new u64((c & m16) | (d << 16), (a & m16) | (b << 16));
+}
+
+function shr64(x, c) {
+  return new u64((x.hi >>> c), (x.lo >>> c) | (x.hi << (32 - c)));
+}
+
+function xor64() {
+  var l = 0, h = 0, i;
+  for (i = 0; i < arguments.length; i++) {
+    l ^= arguments[i].lo;
+    h ^= arguments[i].hi;
+  }
+  return new u64(h, l);
+}
+
+function R(x, c) {
+  var h, l, c1 = 32 - c;
+  if (c < 32) {
+    h = (x.hi >>> c) | (x.lo << c1);
+    l = (x.lo >>> c) | (x.hi << c1);
+  } else if (c < 64) {
+    h = (x.lo >>> c) | (x.hi << c1);
+    l = (x.hi >>> c) | (x.lo << c1);
+  }
+  return new u64(h, l);
+}
+
+function Ch(x, y, z) {
+  var h = (x.hi & y.hi) ^ (~x.hi & z.hi),
+      l = (x.lo & y.lo) ^ (~x.lo & z.lo);
+  return new u64(h, l);
+}
+
+function Maj(x, y, z) {
+  var h = (x.hi & y.hi) ^ (x.hi & z.hi) ^ (y.hi & z.hi),
+      l = (x.lo & y.lo) ^ (x.lo & z.lo) ^ (y.lo & z.lo);
+  return new u64(h, l);
+}
+
+function Sigma0(x) { return xor64(R(x,28), R(x,34), R(x,39)); }
+function Sigma1(x) { return xor64(R(x,14), R(x,18), R(x,41)); }
+function sigma0(x) { return xor64(R(x, 1), R(x, 8), shr64(x,7)); }
+function sigma1(x) { return xor64(R(x,19), R(x,61), shr64(x,6)); }
+
+var K = [
+  new u64(0x428a2f98, 0xd728ae22), new u64(0x71374491, 0x23ef65cd),
+  new u64(0xb5c0fbcf, 0xec4d3b2f), new u64(0xe9b5dba5, 0x8189dbbc),
+  new u64(0x3956c25b, 0xf348b538), new u64(0x59f111f1, 0xb605d019),
+  new u64(0x923f82a4, 0xaf194f9b), new u64(0xab1c5ed5, 0xda6d8118),
+  new u64(0xd807aa98, 0xa3030242), new u64(0x12835b01, 0x45706fbe),
+  new u64(0x243185be, 0x4ee4b28c), new u64(0x550c7dc3, 0xd5ffb4e2),
+  new u64(0x72be5d74, 0xf27b896f), new u64(0x80deb1fe, 0x3b1696b1),
+  new u64(0x9bdc06a7, 0x25c71235), new u64(0xc19bf174, 0xcf692694),
+  new u64(0xe49b69c1, 0x9ef14ad2), new u64(0xefbe4786, 0x384f25e3),
+  new u64(0x0fc19dc6, 0x8b8cd5b5), new u64(0x240ca1cc, 0x77ac9c65),
+  new u64(0x2de92c6f, 0x592b0275), new u64(0x4a7484aa, 0x6ea6e483),
+  new u64(0x5cb0a9dc, 0xbd41fbd4), new u64(0x76f988da, 0x831153b5),
+  new u64(0x983e5152, 0xee66dfab), new u64(0xa831c66d, 0x2db43210),
+  new u64(0xb00327c8, 0x98fb213f), new u64(0xbf597fc7, 0xbeef0ee4),
+  new u64(0xc6e00bf3, 0x3da88fc2), new u64(0xd5a79147, 0x930aa725),
+  new u64(0x06ca6351, 0xe003826f), new u64(0x14292967, 0x0a0e6e70),
+  new u64(0x27b70a85, 0x46d22ffc), new u64(0x2e1b2138, 0x5c26c926),
+  new u64(0x4d2c6dfc, 0x5ac42aed), new u64(0x53380d13, 0x9d95b3df),
+  new u64(0x650a7354, 0x8baf63de), new u64(0x766a0abb, 0x3c77b2a8),
+  new u64(0x81c2c92e, 0x47edaee6), new u64(0x92722c85, 0x1482353b),
+  new u64(0xa2bfe8a1, 0x4cf10364), new u64(0xa81a664b, 0xbc423001),
+  new u64(0xc24b8b70, 0xd0f89791), new u64(0xc76c51a3, 0x0654be30),
+  new u64(0xd192e819, 0xd6ef5218), new u64(0xd6990624, 0x5565a910),
+  new u64(0xf40e3585, 0x5771202a), new u64(0x106aa070, 0x32bbd1b8),
+  new u64(0x19a4c116, 0xb8d2d0c8), new u64(0x1e376c08, 0x5141ab53),
+  new u64(0x2748774c, 0xdf8eeb99), new u64(0x34b0bcb5, 0xe19b48a8),
+  new u64(0x391c0cb3, 0xc5c95a63), new u64(0x4ed8aa4a, 0xe3418acb),
+  new u64(0x5b9cca4f, 0x7763e373), new u64(0x682e6ff3, 0xd6b2b8a3),
+  new u64(0x748f82ee, 0x5defb2fc), new u64(0x78a5636f, 0x43172f60),
+  new u64(0x84c87814, 0xa1f0ab72), new u64(0x8cc70208, 0x1a6439ec),
+  new u64(0x90befffa, 0x23631e28), new u64(0xa4506ceb, 0xde82bde9),
+  new u64(0xbef9a3f7, 0xb2c67915), new u64(0xc67178f2, 0xe372532b),
+  new u64(0xca273ece, 0xea26619c), new u64(0xd186b8c7, 0x21c0c207),
+  new u64(0xeada7dd6, 0xcde0eb1e), new u64(0xf57d4f7f, 0xee6ed178),
+  new u64(0x06f067aa, 0x72176fba), new u64(0x0a637dc5, 0xa2c898a6),
+  new u64(0x113f9804, 0xbef90dae), new u64(0x1b710b35, 0x131c471b),
+  new u64(0x28db77f5, 0x23047d84), new u64(0x32caab7b, 0x40c72493),
+  new u64(0x3c9ebe0a, 0x15c9bebc), new u64(0x431d67c4, 0x9c100d4c),
+  new u64(0x4cc5d4be, 0xcb3e42b6), new u64(0x597f299c, 0xfc657e2a),
+  new u64(0x5fcb6fab, 0x3ad6faec), new u64(0x6c44198c, 0x4a475817)
+];
+
+function crypto_hashblocks(x, m, n) {
+  var z = [], b = [], a = [], w = [], t, i, j;
+
+  for (i = 0; i < 8; i++) z[i] = a[i] = dl64(x, 8*i);
+
+  var pos = 0;
+  while (n >= 128) {
+    for (i = 0; i < 16; i++) w[i] = dl64(m, 8*i+pos);
+    for (i = 0; i < 80; i++) {
+      for (j = 0; j < 8; j++) b[j] = a[j];
+      t = add64(a[7], Sigma1(a[4]), Ch(a[4], a[5], a[6]), K[i], w[i%16]);
+      b[7] = add64(t, Sigma0(a[0]), Maj(a[0], a[1], a[2]));
+      b[3] = add64(b[3], t);
+      for (j = 0; j < 8; j++) a[(j+1)%8] = b[j];
+      if (i%16 === 15) {
+        for (j = 0; j < 16; j++) {
+          w[j] = add64(w[j], w[(j+9)%16], sigma0(w[(j+1)%16]), sigma1(w[(j+14)%16]));
+        }
+      }
+    }
+
+    for (i = 0; i < 8; i++) {
+      a[i] = add64(a[i], z[i]);
+      z[i] = a[i];
+    }
+
+    pos += 128;
+    n -= 128;
+  }
+
+  for (i = 0; i < 8; i++) ts64(x, 8*i, z[i]);
+  return n;
+}
+
+var iv = new Uint8Array([
+  0x6a,0x09,0xe6,0x67,0xf3,0xbc,0xc9,0x08,
+  0xbb,0x67,0xae,0x85,0x84,0xca,0xa7,0x3b,
+  0x3c,0x6e,0xf3,0x72,0xfe,0x94,0xf8,0x2b,
+  0xa5,0x4f,0xf5,0x3a,0x5f,0x1d,0x36,0xf1,
+  0x51,0x0e,0x52,0x7f,0xad,0xe6,0x82,0xd1,
+  0x9b,0x05,0x68,0x8c,0x2b,0x3e,0x6c,0x1f,
+  0x1f,0x83,0xd9,0xab,0xfb,0x41,0xbd,0x6b,
+  0x5b,0xe0,0xcd,0x19,0x13,0x7e,0x21,0x79
+]);
+
+function crypto_hash(out, m, n) {
+  var h = new Uint8Array(64), x = new Uint8Array(256);
+  var i, b = n;
+
+  for (i = 0; i < 64; i++) h[i] = iv[i];
+
+  crypto_hashblocks(h, m, n);
+  n %= 128;
+
+  for (i = 0; i < 256; i++) x[i] = 0;
+  for (i = 0; i < n; i++) x[i] = m[b-n+i];
+  x[n] = 128;
+
+  n = 256-128*(n<112?1:0);
+  x[n-9] = 0;
+  ts64(x, n-8, new u64((b / 0x20000000) | 0, b << 3));
+  crypto_hashblocks(h, x, n);
+
+  for (i = 0; i < 64; i++) out[i] = h[i];
+
+  return 0;
+}
+
+function add(p, q) {
+  var a = gf(), b = gf(), c = gf(),
+      d = gf(), e = gf(), f = gf(),
+      g = gf(), h = gf(), t = gf();
+
+  Z(a, p[1], p[0]);
+  Z(t, q[1], q[0]);
+  M(a, a, t);
+  A(b, p[0], p[1]);
+  A(t, q[0], q[1]);
+  M(b, b, t);
+  M(c, p[3], q[3]);
+  M(c, c, D2);
+  M(d, p[2], q[2]);
+  A(d, d, d);
+  Z(e, b, a);
+  Z(f, d, c);
+  A(g, d, c);
+  A(h, b, a);
+
+  M(p[0], e, f);
+  M(p[1], h, g);
+  M(p[2], g, f);
+  M(p[3], e, h);
+}
+
+function cswap(p, q, b) {
+  var i;
+  for (i = 0; i < 4; i++) {
+    sel25519(p[i], q[i], b);
+  }
+}
+
+function pack(r, p) {
+  var tx = gf(), ty = gf(), zi = gf();
+  inv25519(zi, p[2]);
+  M(tx, p[0], zi);
+  M(ty, p[1], zi);
+  pack25519(r, ty);
+  r[31] ^= par25519(tx) << 7;
+}
+
+function scalarmult(p, q, s) {
+  var b, i;
+  set25519(p[0], gf0);
+  set25519(p[1], gf1);
+  set25519(p[2], gf1);
+  set25519(p[3], gf0);
+  for (i = 255; i >= 0; --i) {
+    b = (s[(i/8)|0] >> (i&7)) & 1;
+    cswap(p, q, b);
+    add(q, p);
+    add(p, p);
+    cswap(p, q, b);
+  }
+}
+
+function scalarbase(p, s) {
+  var q = [gf(), gf(), gf(), gf()];
+  set25519(q[0], X);
+  set25519(q[1], Y);
+  set25519(q[2], gf1);
+  M(q[3], X, Y);
+  scalarmult(p, q, s);
+}
+
+function crypto_sign_keypair(pk, sk, seeded) {
+  var d = new Uint8Array(64);
+  var p = [gf(), gf(), gf(), gf()];
+  var i;
+
+  if (!seeded) randombytes(sk, 32);
+  crypto_hash(d, sk, 32);
+  d[0] &= 248;
+  d[31] &= 127;
+  d[31] |= 64;
+
+  scalarbase(p, d);
+  pack(pk, p);
+
+  for (i = 0; i < 32; i++) sk[i+32] = pk[i];
+  return 0;
+}
+
+var L = new Float64Array([0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58, 0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x10]);
+
+function modL(r, x) {
+  var carry, i, j, k;
+  for (i = 63; i >= 32; --i) {
+    carry = 0;
+    for (j = i - 32, k = i - 12; j < k; ++j) {
+      x[j] += carry - 16 * x[i] * L[j - (i - 32)];
+      carry = Math.floor((x[j] + 128) / 256);
+      x[j] -= carry * 256;
+    }
+    x[j] += carry;
+    x[i] = 0;
+  }
+  carry = 0;
+  for (j = 0; j < 32; j++) {
+    x[j] += carry - (x[31] >> 4) * L[j];
+    carry = x[j] >> 8;
+    x[j] &= 255;
+  }
+  for (j = 0; j < 32; j++) x[j] -= carry * L[j];
+  for (i = 0; i < 32; i++) {
+    x[i+1] += x[i] >> 8;
+    r[i] = x[i] & 255;
+  }
+}
+
+function reduce(r) {
+  var x = new Float64Array(64), i;
+  for (i = 0; i < 64; i++) x[i] = r[i];
+  for (i = 0; i < 64; i++) r[i] = 0;
+  modL(r, x);
+}
+
+// Note: difference from C - smlen returned, not passed as argument.
+function crypto_sign(sm, m, n, sk) {
+  var d = new Uint8Array(64), h = new Uint8Array(64), r = new Uint8Array(64);
+  var i, j, x = new Float64Array(64);
+  var p = [gf(), gf(), gf(), gf()];
+
+  crypto_hash(d, sk, 32);
+  d[0] &= 248;
+  d[31] &= 127;
+  d[31] |= 64;
+
+  var smlen = n + 64;
+  for (i = 0; i < n; i++) sm[64 + i] = m[i];
+  for (i = 0; i < 32; i++) sm[32 + i] = d[32 + i];
+
+  crypto_hash(r, sm.subarray(32), n+32);
+  reduce(r);
+  scalarbase(p, r);
+  pack(sm, p);
+
+  for (i = 32; i < 64; i++) sm[i] = sk[i];
+  crypto_hash(h, sm, n + 64);
+  reduce(h);
+
+  for (i = 0; i < 64; i++) x[i] = 0;
+  for (i = 0; i < 32; i++) x[i] = r[i];
+  for (i = 0; i < 32; i++) {
+    for (j = 0; j < 32; j++) {
+      x[i+j] += h[i] * d[j];
+    }
+  }
+
+  modL(sm.subarray(32), x);
+  return smlen;
+}
+
+function unpackneg(r, p) {
+  var t = gf(), chk = gf(), num = gf(),
+      den = gf(), den2 = gf(), den4 = gf(),
+      den6 = gf();
+
+  set25519(r[2], gf1);
+  unpack25519(r[1], p);
+  S(num, r[1]);
+  M(den, num, D);
+  Z(num, num, r[2]);
+  A(den, r[2], den);
+
+  S(den2, den);
+  S(den4, den2);
+  M(den6, den4, den2);
+  M(t, den6, num);
+  M(t, t, den);
+
+  pow2523(t, t);
+  M(t, t, num);
+  M(t, t, den);
+  M(t, t, den);
+  M(r[0], t, den);
+
+  S(chk, r[0]);
+  M(chk, chk, den);
+  if (neq25519(chk, num)) M(r[0], r[0], I);
+
+  S(chk, r[0]);
+  M(chk, chk, den);
+  if (neq25519(chk, num)) return -1;
+
+  if (par25519(r[0]) === (p[31]>>7)) Z(r[0], gf0, r[0]);
+
+  M(r[3], r[0], r[1]);
+  return 0;
+}
+
+function crypto_sign_open(m, sm, n, pk) {
+  var i;
+  var t = new Uint8Array(32), h = new Uint8Array(64);
+  var p = [gf(), gf(), gf(), gf()],
+      q = [gf(), gf(), gf(), gf()];
+
+  if (n < 64) return -1;
+
+  if (unpackneg(q, pk)) return -1;
+
+  for (i = 0; i < n; i++) m[i] = sm[i];
+  for (i = 0; i < 32; i++) m[i+32] = pk[i];
+  crypto_hash(h, m, n);
+  reduce(h);
+  scalarmult(p, q, h);
+
+  scalarbase(q, sm.subarray(32));
+  add(p, q);
+  pack(t, p);
+
+  n -= 64;
+  if (crypto_verify_32(sm, 0, t, 0)) {
+    for (i = 0; i < n; i++) m[i] = 0;
+    return -1;
+  }
+
+  for (i = 0; i < n; i++) m[i] = sm[i + 64];
+  return n;
+}
+
+var crypto_secretbox_KEYBYTES = 32,
+    crypto_secretbox_NONCEBYTES = 24,
+    crypto_secretbox_ZEROBYTES = 32,
+    crypto_secretbox_BOXZEROBYTES = 16,
+    crypto_scalarmult_BYTES = 32,
+    crypto_scalarmult_SCALARBYTES = 32,
+    crypto_box_PUBLICKEYBYTES = 32,
+    crypto_box_SECRETKEYBYTES = 32,
+    crypto_box_BEFORENMBYTES = 32,
+    crypto_box_NONCEBYTES = crypto_secretbox_NONCEBYTES,
+    crypto_box_ZEROBYTES = crypto_secretbox_ZEROBYTES,
+    crypto_box_BOXZEROBYTES = crypto_secretbox_BOXZEROBYTES,
+    crypto_sign_BYTES = 64,
+    crypto_sign_PUBLICKEYBYTES = 32,
+    crypto_sign_SECRETKEYBYTES = 64,
+    crypto_sign_SEEDBYTES = 32,
+    crypto_hash_BYTES = 64;
+
+nacl.lowlevel = {
+  crypto_core_hsalsa20: crypto_core_hsalsa20,
+  crypto_stream_xor: crypto_stream_xor,
+  crypto_stream: crypto_stream,
+  crypto_stream_salsa20_xor: crypto_stream_salsa20_xor,
+  crypto_stream_salsa20: crypto_stream_salsa20,
+  crypto_onetimeauth: crypto_onetimeauth,
+  crypto_onetimeauth_verify: crypto_onetimeauth_verify,
+  crypto_verify_16: crypto_verify_16,
+  crypto_verify_32: crypto_verify_32,
+  crypto_secretbox: crypto_secretbox,
+  crypto_secretbox_open: crypto_secretbox_open,
+  crypto_scalarmult: crypto_scalarmult,
+  crypto_scalarmult_base: crypto_scalarmult_base,
+  crypto_box_beforenm: crypto_box_beforenm,
+  crypto_box_afternm: crypto_box_afternm,
+  crypto_box: crypto_box,
+  crypto_box_open: crypto_box_open,
+  crypto_box_keypair: crypto_box_keypair,
+  crypto_hash: crypto_hash,
+  crypto_sign: crypto_sign,
+  crypto_sign_keypair: crypto_sign_keypair,
+  crypto_sign_open: crypto_sign_open,
+
+  crypto_secretbox_KEYBYTES: crypto_secretbox_KEYBYTES,
+  crypto_secretbox_NONCEBYTES: crypto_secretbox_NONCEBYTES,
+  crypto_secretbox_ZEROBYTES: crypto_secretbox_ZEROBYTES,
+  crypto_secretbox_BOXZEROBYTES: crypto_secretbox_BOXZEROBYTES,
+  crypto_scalarmult_BYTES: crypto_scalarmult_BYTES,
+  crypto_scalarmult_SCALARBYTES: crypto_scalarmult_SCALARBYTES,
+  crypto_box_PUBLICKEYBYTES: crypto_box_PUBLICKEYBYTES,
+  crypto_box_SECRETKEYBYTES: crypto_box_SECRETKEYBYTES,
+  crypto_box_BEFORENMBYTES: crypto_box_BEFORENMBYTES,
+  crypto_box_NONCEBYTES: crypto_box_NONCEBYTES,
+  crypto_box_ZEROBYTES: crypto_box_ZEROBYTES,
+  crypto_box_BOXZEROBYTES: crypto_box_BOXZEROBYTES,
+  crypto_sign_BYTES: crypto_sign_BYTES,
+  crypto_sign_PUBLICKEYBYTES: crypto_sign_PUBLICKEYBYTES,
+  crypto_sign_SECRETKEYBYTES: crypto_sign_SECRETKEYBYTES,
+  crypto_sign_SEEDBYTES: crypto_sign_SEEDBYTES,
+  crypto_hash_BYTES: crypto_hash_BYTES,
+
+  gf: gf,
+  D: D,
+  L: L,
+  pack25519: pack25519,
+  unpack25519: unpack25519,
+  M: M,
+  A: A,
+  S: S,
+  Z: Z,
+  pow2523: pow2523,
+  add: add,
+  set25519: set25519,
+  modL: modL,
+  scalarmult: scalarmult,
+  scalarbase: scalarbase,
+};
+
+/* High-level API */
+
+function checkLengths(k, n) {
+  if (k.length !== crypto_secretbox_KEYBYTES) throw new Error('bad key size');
+  if (n.length !== crypto_secretbox_NONCEBYTES) throw new Error('bad nonce size');
+}
+
+function checkBoxLengths(pk, sk) {
+  if (pk.length !== crypto_box_PUBLICKEYBYTES) throw new Error('bad public key size');
+  if (sk.length !== crypto_box_SECRETKEYBYTES) throw new Error('bad secret key size');
+}
+
+function checkArrayTypes() {
+  for (var i = 0; i < arguments.length; i++) {
+    if (!(arguments[i] instanceof Uint8Array))
+      throw new TypeError('unexpected type, use Uint8Array');
+  }
+}
+
+function cleanup(arr) {
+  for (var i = 0; i < arr.length; i++) arr[i] = 0;
+}
+
+nacl.randomBytes = function(n) {
+  var b = new Uint8Array(n);
+  randombytes(b, n);
+  return b;
+};
+
+nacl.secretbox = function(msg, nonce, key) {
+  checkArrayTypes(msg, nonce, key);
+  checkLengths(key, nonce);
+  var m = new Uint8Array(crypto_secretbox_ZEROBYTES + msg.length);
+  var c = new Uint8Array(m.length);
+  for (var i = 0; i < msg.length; i++) m[i+crypto_secretbox_ZEROBYTES] = msg[i];
+  crypto_secretbox(c, m, m.length, nonce, key);
+  return c.subarray(crypto_secretbox_BOXZEROBYTES);
+};
+
+nacl.secretbox.open = function(box, nonce, key) {
+  checkArrayTypes(box, nonce, key);
+  checkLengths(key, nonce);
+  var c = new Uint8Array(crypto_secretbox_BOXZEROBYTES + box.length);
+  var m = new Uint8Array(c.length);
+  for (var i = 0; i < box.length; i++) c[i+crypto_secretbox_BOXZEROBYTES] = box[i];
+  if (c.length < 32) return null;
+  if (crypto_secretbox_open(m, c, c.length, nonce, key) !== 0) return null;
+  return m.subarray(crypto_secretbox_ZEROBYTES);
+};
+
+nacl.secretbox.keyLength = crypto_secretbox_KEYBYTES;
+nacl.secretbox.nonceLength = crypto_secretbox_NONCEBYTES;
+nacl.secretbox.overheadLength = crypto_secretbox_BOXZEROBYTES;
+
+nacl.scalarMult = function(n, p) {
+  checkArrayTypes(n, p);
+  if (n.length !== crypto_scalarmult_SCALARBYTES) throw new Error('bad n size');
+  if (p.length !== crypto_scalarmult_BYTES) throw new Error('bad p size');
+  var q = new Uint8Array(crypto_scalarmult_BYTES);
+  crypto_scalarmult(q, n, p);
+  return q;
+};
+
+nacl.scalarMult.base = function(n) {
+  checkArrayTypes(n);
+  if (n.length !== crypto_scalarmult_SCALARBYTES) throw new Error('bad n size');
+  var q = new Uint8Array(crypto_scalarmult_BYTES);
+  crypto_scalarmult_base(q, n);
+  return q;
+};
+
+nacl.scalarMult.scalarLength = crypto_scalarmult_SCALARBYTES;
+nacl.scalarMult.groupElementLength = crypto_scalarmult_BYTES;
+
+nacl.box = function(msg, nonce, publicKey, secretKey) {
+  var k = nacl.box.before(publicKey, secretKey);
+  return nacl.secretbox(msg, nonce, k);
+};
+
+nacl.box.before = function(publicKey, secretKey) {
+  checkArrayTypes(publicKey, secretKey);
+  checkBoxLengths(publicKey, secretKey);
+  var k = new Uint8Array(crypto_box_BEFORENMBYTES);
+  crypto_box_beforenm(k, publicKey, secretKey);
+  return k;
+};
+
+nacl.box.after = nacl.secretbox;
+
+nacl.box.open = function(msg, nonce, publicKey, secretKey) {
+  var k = nacl.box.before(publicKey, secretKey);
+  return nacl.secretbox.open(msg, nonce, k);
+};
+
+nacl.box.open.after = nacl.secretbox.open;
+
+nacl.box.keyPair = function() {
+  var pk = new Uint8Array(crypto_box_PUBLICKEYBYTES);
+  var sk = new Uint8Array(crypto_box_SECRETKEYBYTES);
+  crypto_box_keypair(pk, sk);
+  return {publicKey: pk, secretKey: sk};
+};
+
+nacl.box.keyPair.fromSecretKey = function(secretKey) {
+  checkArrayTypes(secretKey);
+  if (secretKey.length !== crypto_box_SECRETKEYBYTES)
+    throw new Error('bad secret key size');
+  var pk = new Uint8Array(crypto_box_PUBLICKEYBYTES);
+  crypto_scalarmult_base(pk, secretKey);
+  return {publicKey: pk, secretKey: new Uint8Array(secretKey)};
+};
+
+nacl.box.publicKeyLength = crypto_box_PUBLICKEYBYTES;
+nacl.box.secretKeyLength = crypto_box_SECRETKEYBYTES;
+nacl.box.sharedKeyLength = crypto_box_BEFORENMBYTES;
+nacl.box.nonceLength = crypto_box_NONCEBYTES;
+nacl.box.overheadLength = nacl.secretbox.overheadLength;
+
+nacl.sign = function(msg, secretKey) {
+  checkArrayTypes(msg, secretKey);
+  if (secretKey.length !== crypto_sign_SECRETKEYBYTES)
+    throw new Error('bad secret key size');
+  var signedMsg = new Uint8Array(crypto_sign_BYTES+msg.length);
+  crypto_sign(signedMsg, msg, msg.length, secretKey);
+  return signedMsg;
+};
+
+nacl.sign.open = function(signedMsg, publicKey) {
+  checkArrayTypes(signedMsg, publicKey);
+  if (publicKey.length !== crypto_sign_PUBLICKEYBYTES)
+    throw new Error('bad public key size');
+  var tmp = new Uint8Array(signedMsg.length);
+  var mlen = crypto_sign_open(tmp, signedMsg, signedMsg.length, publicKey);
+  if (mlen < 0) return null;
+  var m = new Uint8Array(mlen);
+  for (var i = 0; i < m.length; i++) m[i] = tmp[i];
+  return m;
+};
+
+nacl.sign.detached = function(msg, secretKey) {
+  var signedMsg = nacl.sign(msg, secretKey);
+  var sig = new Uint8Array(crypto_sign_BYTES);
+  for (var i = 0; i < sig.length; i++) sig[i] = signedMsg[i];
+  return sig;
+};
+
+nacl.sign.detached.verify = function(msg, sig, publicKey) {
+  checkArrayTypes(msg, sig, publicKey);
+  if (sig.length !== crypto_sign_BYTES)
+    throw new Error('bad signature size');
+  if (publicKey.length !== crypto_sign_PUBLICKEYBYTES)
+    throw new Error('bad public key size');
+  var sm = new Uint8Array(crypto_sign_BYTES + msg.length);
+  var m = new Uint8Array(crypto_sign_BYTES + msg.length);
+  var i;
+  for (i = 0; i < crypto_sign_BYTES; i++) sm[i] = sig[i];
+  for (i = 0; i < msg.length; i++) sm[i+crypto_sign_BYTES] = msg[i];
+  return (crypto_sign_open(m, sm, sm.length, publicKey) >= 0);
+};
+
+nacl.sign.keyPair = function() {
+  var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
+  var sk = new Uint8Array(crypto_sign_SECRETKEYBYTES);
+  crypto_sign_keypair(pk, sk);
+  return {publicKey: pk, secretKey: sk};
+};
+
+nacl.sign.keyPair.fromSecretKey = function(secretKey) {
+  checkArrayTypes(secretKey);
+  if (secretKey.length !== crypto_sign_SECRETKEYBYTES)
+    throw new Error('bad secret key size');
+  var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
+  for (var i = 0; i < pk.length; i++) pk[i] = secretKey[32+i];
+  return {publicKey: pk, secretKey: new Uint8Array(secretKey)};
+};
+
+nacl.sign.keyPair.fromSeed = function(seed) {
+  checkArrayTypes(seed);
+  if (seed.length !== crypto_sign_SEEDBYTES)
+    throw new Error('bad seed size');
+  var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
+  var sk = new Uint8Array(crypto_sign_SECRETKEYBYTES);
+  for (var i = 0; i < 32; i++) sk[i] = seed[i];
+  crypto_sign_keypair(pk, sk, true);
+  return {publicKey: pk, secretKey: sk};
+};
+
+nacl.sign.publicKeyLength = crypto_sign_PUBLICKEYBYTES;
+nacl.sign.secretKeyLength = crypto_sign_SECRETKEYBYTES;
+nacl.sign.seedLength = crypto_sign_SEEDBYTES;
+nacl.sign.signatureLength = crypto_sign_BYTES;
+
+nacl.hash = function(msg) {
+  checkArrayTypes(msg);
+  var h = new Uint8Array(crypto_hash_BYTES);
+  crypto_hash(h, msg, msg.length);
+  return h;
+};
+
+nacl.hash.hashLength = crypto_hash_BYTES;
+
+nacl.verify = function(x, y) {
+  checkArrayTypes(x, y);
+  // Zero length arguments are considered not equal.
+  if (x.length === 0 || y.length === 0) return false;
+  if (x.length !== y.length) return false;
+  return (vn(x, 0, y, 0, x.length) === 0) ? true : false;
+};
+
+nacl.setPRNG = function(fn) {
+  randombytes = fn;
+};
+
+(function() {
+  // Initialize PRNG if environment provides CSPRNG.
+  // If not, methods calling randombytes will throw.
+  var crypto = typeof self !== 'undefined' ? (self.crypto || self.msCrypto) : null;
+  if (crypto && crypto.getRandomValues) {
+    // Browsers.
+    var QUOTA = 65536;
+    nacl.setPRNG(function(x, n) {
+      var i, v = new Uint8Array(n);
+      for (i = 0; i < n; i += QUOTA) {
+        crypto.getRandomValues(v.subarray(i, i + Math.min(n - i, QUOTA)));
+      }
+      for (i = 0; i < n; i++) x[i] = v[i];
+      cleanup(v);
+    });
+  } else if (typeof require !== 'undefined') {
+    // Node.js.
+    crypto = require('crypto');
+    if (crypto && crypto.randomBytes) {
+      nacl.setPRNG(function(x, n) {
+        var i, v = crypto.randomBytes(n);
+        for (i = 0; i < n; i++) x[i] = v[i];
+        cleanup(v);
+      });
+    }
+  }
+})();
+
+})(typeof module !== 'undefined' && module.exports ? module.exports : (self.nacl = self.nacl || {}));
+</script>
+<script>
+(function () {
+  'use strict'
+
+  function canonicalize (value) {
+    if (Array.isArray(value)) return '[' + value.map(canonicalize).join(',') + ']'
+    if (value && typeof value === 'object') {
+      var keys = Object.keys(value).sort()
+      return '{' + keys.map(function (key) {
+        return JSON.stringify(key) + ':' + canonicalize(value[key])
+      }).join(',') + '}'
+    }
+    return JSON.stringify(value)
+  }
+
+  function hexToBytes (hex) {
+    if (typeof hex !== 'string' || hex.length === 0 || hex.length % 2 !== 0) return null
+    var bytes = new Uint8Array(hex.length / 2)
+    for (var i = 0; i < bytes.length; i++) {
+      var byte = parseInt(hex.substr(i * 2, 2), 16)
+      if (Number.isNaN(byte)) return null
+      bytes[i] = byte
+    }
+    return bytes
+  }
+
+  function formatAmount (raw, decimals) {
+    try {
+      var neg = String(raw).trim().charAt(0) === '-'
+      var digits = String(raw).replace('-', '').padStart(decimals + 1, '0')
+      var whole = digits.slice(0, digits.length - decimals) || '0'
+      var frac = digits.slice(digits.length - decimals).replace(/0+$/, '')
+      return (neg ? '-' : '') + whole + (frac ? '.' + frac : '')
+    } catch (err) {
+      return raw
+    }
+  }
+
+  var SAMPLE_RECEIPT = {
+    id: 'receipt_be9ad3cca8593936',
+    merchant: 'b26ba7bd2b412b72fd4f70b43e3bccbabbfe87fa62d005ca7fdb56ea75ec5d28',
+    createdAt: '2026-08-25T01:30:34.572Z',
+    previousEventId: null,
+    previousEventHash: null,
+    type: 'invoice_paid',
+    invoiceId: 'inv_cb0fded00eee',
+    amount: '5000000',
+    currency: 'USDT',
+    decimals: 6,
+    chain: 'testnet',
+    payer: '0x1EFa3DBa2f58403CDf4785ecA351c430500Ef683',
+    recipient: '0x24e061968178ec062258790510938A03b93dba59',
+    txHash: '0xce995cb58afc9d2ffadf8e87b1507a9e6205c7018f9b4befe629daea3954fd7f',
+    signature: 'a4db652b4cb2376fbb3e178cb6e1686455a92cf8d2e90ebc8c2e3be7b4cc73130937024794c7e8dbbf8949268d2ad9c1adec3840c28a9c08601ec422a56abb07'
+  }
+
+  var input = document.getElementById('verify-input')
+  var btn = document.getElementById('verify-btn')
+  var sampleBtn = document.getElementById('verify-sample-btn')
+  var result = document.getElementById('verify-result')
+  var mark = document.getElementById('verify-result-mark')
+  var title = document.getElementById('verify-result-title')
+  var detail = document.getElementById('verify-result-detail')
+  var fields = document.getElementById('verify-result-fields')
+
+  if (!input || !btn || !result) return
+
+  function t (key) {
+    return window.CLIQ_I18N ? window.CLIQ_I18N.t(key) : key
+  }
+
+  function show (state, titleKey, detailKey, event) {
+    result.hidden = false
+    result.classList.toggle('is-valid', state === 'valid')
+    mark.textContent = state === 'valid' ? '✓' : (state === 'invalid' ? '✕' : '?')
+    title.textContent = t(titleKey)
+    detail.textContent = t(detailKey)
+    fields.innerHTML = ''
+    if (!event) return
+
+    var rows = [
+      [t('verify.fields.invoice'), event.invoiceId],
+      [t('verify.fields.amount'), (event.amount != null && event.decimals != null)
+        ? formatAmount(event.amount, event.decimals) + ' ' + (event.currency || '')
+        : event.amount],
+      [t('verify.fields.merchant'), event.merchant],
+      [t('verify.fields.tx'), event.txHash]
+    ]
+    rows.forEach(function (row) {
+      if (!row[1]) return
+      var line = document.createElement('div')
+      var label = document.createElement('span')
+      label.textContent = row[0] + ': '
+      line.appendChild(label)
+      line.appendChild(document.createTextNode(row[1]))
+      fields.appendChild(line)
+    })
+  }
+
+  function verify () {
+    var raw = input.value.trim()
+    if (!raw) {
+      show('error', 'verify.result.empty_title', 'verify.result.empty_detail')
+      return
+    }
+
+    var event
+    try {
+      event = JSON.parse(raw)
+    } catch (err) {
+      show('error', 'verify.result.bad_json_title', 'verify.result.bad_json_detail')
+      return
+    }
+
+    if (!event || typeof event !== 'object' || Array.isArray(event)) {
+      show('error', 'verify.result.not_receipt_title', 'verify.result.not_receipt_detail')
+      return
+    }
+    if (!event.signature || !event.merchant) {
+      show('error', 'verify.result.missing_fields_title', 'verify.result.missing_fields_detail')
+      return
+    }
+
+    var sigBytes = hexToBytes(event.signature)
+    var pubBytes = hexToBytes(event.merchant)
+    if (!sigBytes || sigBytes.length !== 64) {
+      show('error', 'verify.result.bad_sig_title', 'verify.result.bad_sig_detail')
+      return
+    }
+    if (!pubBytes || pubBytes.length !== 32) {
+      show('error', 'verify.result.bad_pub_title', 'verify.result.bad_pub_detail')
+      return
+    }
+
+    var unsigned = {}
+    Object.keys(event).forEach(function (key) {
+      if (key !== 'signature') unsigned[key] = event[key]
+    })
+
+    var message
+    try {
+      message = new TextEncoder().encode(canonicalize(unsigned))
+    } catch (err) {
+      title.textContent = t('verify.result.process_error_title')
+      detail.textContent = err.message
+      result.hidden = false
+      result.classList.remove('is-valid')
+      mark.textContent = '?'
+      fields.innerHTML = ''
+      return
+    }
+
+    var valid = false
+    try {
+      valid = window.nacl.sign.detached.verify(message, sigBytes, pubBytes)
+    } catch (err) {
+      title.textContent = t('verify.result.verify_error_title')
+      detail.textContent = err.message
+      result.hidden = false
+      result.classList.remove('is-valid')
+      mark.textContent = '?'
+      fields.innerHTML = ''
+      return
+    }
+
+    if (valid) {
+      show('valid', 'verify.result.valid_title', 'verify.result.valid_detail', event)
+    } else {
+      show('invalid', 'verify.result.invalid_title', 'verify.result.invalid_detail', event)
+    }
+  }
+
+  btn.addEventListener('click', verify)
+  sampleBtn.addEventListener('click', function () {
+    input.value = JSON.stringify(SAMPLE_RECEIPT, null, 2)
+    verify()
+  })
+
+  document.addEventListener('cliq:language-changed', function () {
+    if (!result.hidden) verify()
+  })
+})()
+</script>

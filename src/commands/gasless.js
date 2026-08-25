@@ -5,6 +5,7 @@ const store = require('../invoices/store.js')
 const ledger = require('../ledger/events.js')
 const { spawnSync } = require('bare-subprocess')
 const path = require('bare-path')
+const os = require('bare-os')
 
 const DEFAULT_NETWORK = 'smart-account-sepolia-pimlico'
 const DEFAULT_TOKEN = 'usdt'
@@ -132,7 +133,8 @@ async function pay (args) {
 }
 
 function runWdk (args) {
-  const bin = path.join(__dirname, '..', '..', 'node_modules', '.bin', 'wdk')
+  const binName = os.platform() === 'win32' ? 'wdk.CMD' : 'wdk'
+  const bin = path.join(__dirname, '..', '..', 'node_modules', '.bin', binName)
   const child = spawnSync(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] })
 
   if (child.status !== 0) {

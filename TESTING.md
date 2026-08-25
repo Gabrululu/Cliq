@@ -1,115 +1,115 @@
-# Pendientes de validación con red real
+# Real-network validation checklist
 
-Este checklist junta todo lo que quedó marcado como "no probado por la red del sandbox" a lo largo de las 7 fases. Usar `pnpm` en vez de `npm` salvo donde se indique lo contrario (herramientas globales `bare`/`pear` y comandos `bare`/`pear` en sí).
+This checklist gathers everything that was flagged as "not tested by the sandbox's network" across the 7 phases. Use `pnpm` instead of `npm` except where noted otherwise (the global `bare`/`pear` tools and the `bare`/`pear` commands themselves).
 
-## 1. Instalación limpia (nunca se hizo desde cero en otra máquina)
+## 1. Clean install (never done from scratch on another machine)
 
 ```
-git clone <tu-repo>
+git clone <your-repo>
 cd CLIQ
-pnpm add -g bare pear   # herramientas globales, no vienen en package.json
+pnpm add -g bare pear   # global tools, not in package.json
 pnpm install
 bare index.js help
 ```
 
-- [x] Confirmar que no falta ningún paso de setup asumido en un entorno ya semi-armado. (2026-08-23: hubo un paso extra no documentado — `pnpm setup` para crear `PNPM_HOME`, ya que `pnpm add -g` fallaba con `ERR_PNPM_NO_GLOBAL_BIN_DIR` sin él).
-- [x] Confirmar espacio en disco disponible para `@qvac/sdk` (o decidir migrar a `@qvac/bare-sdk`). (2026-08-23: `node_modules` quedó en 4.4GB, 15GB libres tras la instalación — no hizo falta migrar).
+- [x] Confirm no setup step is missing that was assumed by an already semi-configured environment. (2026-08-23: there was one undocumented extra step — `pnpm setup` to create `PNPM_HOME`, since `pnpm add -g` failed with `ERR_PNPM_NO_GLOBAL_BIN_DIR` without it).
+- [x] Confirm disk space available for `@qvac/sdk` (or decide to migrate to `@qvac/bare-sdk`). (2026-08-23: `node_modules` ended up at 4.4GB, 15GB free after install — no need to migrate).
 
-## 2. Pagos reales con WDK (Fase 2-3)
+## 2. Real payments with WDK (Phase 2-3)
 
-Nunca se probó contra una red de verdad — el sandbox bloqueaba toda conexión RPC saliente.
+Never tested against a real network before — the sandbox blocked all outbound RPC connections.
 
 ```
-# .env con un WDK_RPC_URL real (ej. Sepolia) y una wallet de testnet fondeada
+# .env with a real WDK_RPC_URL (e.g. Sepolia) and a funded testnet wallet
 bare index.js wallet balance
 bare index.js invoice create --amount 5.00
-bare index.js pay <invoice-id>            # cotización
-bare index.js pay <invoice-id> --yes      # envío real
+bare index.js pay <invoice-id>            # quote
+bare index.js pay <invoice-id> --yes      # real send
 ```
 
-Necesario: un RPC de testnet funcionando, la wallet de `--from-index 1` fondeada con USDT de prueba y con el token nativo para el gas, y `WDK_USDT_CONTRACT` apuntando al contrato correcto de esa red.
+Needed: a working testnet RPC, the `--from-index 1` wallet funded with test USDT and native token for gas, and `WDK_USDT_CONTRACT` pointing at that network's correct contract.
 
-- [x] `wallet balance` no rompe. (2026-08-23: Sepolia real vía `https://ethereum-sepolia-rpc.publicnode.com`, contrato USDT de prueba `ERC20Mock` en `0xc4dcc311c028e341fd8602d8eb89c5de94625927`, minteado 1000 USD₮ a la cuenta 1).
-- [x] `pay --yes` devuelve un `txHash` real. (2026-08-23: `inv_64375ac6c4f9` → tx `0x636f6155235cbf825783a3970df8e138eeb13b2bb45d92360c691710752974bb`).
-- [x] El `txHash` queda persistido en la factura y en el recibo firmado. (2026-08-23: confirmado con `invoice show` y `receipt verify` — firma y encadenamiento OK).
+- [x] `wallet balance` doesn't break. (2026-08-23: real Sepolia via `https://ethereum-sepolia-rpc.publicnode.com`, test USDT contract `ERC20Mock` at `0xc4dcc311c028e341fd8602d8eb89c5de94625927`, minted 1000 USD₮ to account 1).
+- [x] `pay --yes` returns a real `txHash`. (2026-08-23: `inv_64375ac6c4f9` → tx `0x636f6155235cbf825783a3970df8e138eeb13b2bb45d92360c691710752974bb`).
+- [x] The `txHash` gets persisted on the invoice and on the signed receipt. (2026-08-23: confirmed with `invoice show` and `receipt verify` — signature and chain link OK).
 
-Nota: el segundo contrato que pasó el usuario (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, "Tether USD", `TransparentUpgradeableProxy`) no se usó — no tiene un `mint` público conocido, mientras que `0xc4dcc311c028e341fd8602d8eb89c5de94625927` es un `ERC20Mock` verificado con `mint(address,uint256)` sin restricción de owner, ideal para autoabastecerse de tokens de prueba.
+Note: the second contract the user passed in (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, "Tether USD", `TransparentUpgradeableProxy`) wasn't used — it has no known public `mint`, while `0xc4dcc311c028e341fd8602d8eb89c5de94625927` is a verified `ERC20Mock` with an unrestricted `mint(address,uint256)`, ideal for self-funding with test tokens.
 
-## 3. Sincronización P2P (Fase 5) — necesita dos máquinas o carpetas
+## 3. P2P synchronization (Phase 5) — needs two machines or folders
 
 ```
-# Terminal/máquina A
+# Terminal/machine A
 bare index.js sync --room demo
 
-# Terminal/máquina B (con red abierta a la DHT)
+# Terminal/machine B (with network access to the DHT)
 bare index.js sync --room demo
 ```
 
-- [x] Ambos terminales se descubren entre sí (no solo que el comando termina sin colgarse, eso ya está probado). (2026-08-23: probado con dos identidades independientes — dos carpetas (`/tmp/tp-peer-a`, `/tmp/tp-peer-b`), cada una con su propio `.cliq` vía `merchant init` — corriendo `sync --room demo` en simultáneo en el mismo host. **Con `--timeout 25000` no se descubrieron (0 peers)**; con **`--timeout 60000` sí** — "Peer conectado" en ambos lados. Este entorno reporta `firewalled true` / `NAT type consistent` en el DHT (visto en logs de `pear`/`pear seed`), lo que probablemente explica que el hole-punching tarde más de lo esperado. Recomendación: si en producción los comercios están detrás de NATs restrictivas, contemplar un timeout mayor a los 20s por defecto del comando `sync`, o reintentos).
-- [x] Los eventos de un lado aparecen en el ledger del otro. (2026-08-23: cada peer creó un evento `invoice_paid` único —`inv_a_only` en A, `inv_b_only` en B— directamente vía `ledger.createEvent` (sin pasar por pago real, para aislar la prueba de sync/merge de la de WDK ya cubierta en #2). Tras el `sync`, ambos ledgers quedaron con los 4 recibos: los 2 propios + los 2 del otro comercio, verificado con `merchant ledger` en ambos lados).
-- [x] Provocar un conflicto a propósito (misma `invoiceId`, dos `txHash` distintos desde comercios distintos) y confirmar que `sync` lo reporta en vez de pisarlo silenciosamente. (2026-08-23: ambos peers crearon un evento con `invoiceId: inv_conflict_test` pero `txHash` distinto. Tras el sync, **ambos lados reportaron el conflicto correctamente** en la sección "Conflictos detectados" con los dos `receipt_id`/`txHash`/comercio enfrentados, y ninguno de los dos eventos se sobreescribió — los dos quedaron guardados en el ledger de ambos peers).
+- [x] Both terminals discover each other (not just that the command finishes without hanging, that's already tested). (2026-08-23: tested with two independent identities — two folders (`/tmp/tp-peer-a`, `/tmp/tp-peer-b`), each with its own `.cliq` via `merchant init` — running `sync --room demo` at the same time on the same host. **With `--timeout 25000` they didn't discover each other (0 peers)**; with **`--timeout 60000` they did** — "Peer connected" on both sides. This environment reports `firewalled true` / `NAT type consistent` on the DHT (seen in `pear`/`pear seed` logs), which likely explains why hole-punching takes longer than expected. Recommendation: if merchants in production are behind restrictive NATs, consider a longer timeout than the `sync` command's 20s default, or retries).
+- [x] Events from one side show up in the other's ledger. (2026-08-23: each peer created a unique `invoice_paid` event — `inv_a_only` on A, `inv_b_only` on B — directly via `ledger.createEvent` (without going through a real payment, to isolate the sync/merge test from the WDK test already covered in #2). After `sync`, both ledgers ended up with all 4 receipts: their own 2 + the other merchant's 2, verified with `merchant ledger` on both sides).
+- [x] Deliberately trigger a conflict (same `invoiceId`, two different `txHash` values from different merchants) and confirm `sync` reports it instead of silently overwriting it. (2026-08-23: both peers created an event with `invoiceId: inv_conflict_test` but a different `txHash`. After sync, **both sides correctly reported the conflict** in the "Conflicts detected" section with both `receipt_id`/`txHash`/merchant pairs facing off, and neither event got overwritten — both stayed stored in both peers' ledgers).
 
-## 4. Asistente QVAC (Fase 6)
-
-```
-bare index.js ask "cuanto vendi hoy?"
-```
-
-La descarga del modelo (773MB, vía la misma red P2P) nunca terminó en el sandbox. Con red real debería completarse (puede tardar según el ancho de banda) y devolver una respuesta coherente basada en los datos propios. Si tarda más de 120s, subir `QVAC_LOAD_TIMEOUT_MS` en `.env`.
-
-- [x] La descarga del modelo termina. (2026-08-23: completó los 773MB vía el registry P2P de QVAC en ~3 minutos con conectividad real — más de los 120s del timeout original, por eso hubo que subir `QVAC_LOAD_TIMEOUT_MS` a 600000 en `.env` antes de correrlo. El log del progreso confirma que el mecanismo de descarga funciona (fue subiendo de 0% a 100% de forma constante), y después cargó el modelo (logs de `llama.cpp` repackeando tensores) sin errores).
-- [~] La respuesta es coherente con los datos reales. (2026-08-23: **parcialmente** — el pipeline funciona (devolvió texto en español, sin crashear), pero el contenido no fue del todo preciso: para la pregunta "cuanto vendi hoy?", con una factura real pagada (5 USDT, `inv_64375ac6c4f9`, status `submitted`) en el contexto que se le pasó, el modelo respondió que "no tengo información sobre las transacciones" y calificó la factura como "pendiente" cuando en realidad estaba pagada, sin sumar el monto. Es esperable dado que es un modelo muy chico (1B parámetros, cuantizado Q4) — vale la pena decidir si alcanza para el caso de uso o si conviene un modelo más grande/otro prompt, pero **no es un bug de la integración QVAC en sí** — la descarga, carga e inferencia funcionaron correctamente de punta a punta).
-
-## 5. Distribución con Pear (Fase 7) — no se ejecutó ni un solo comando `pear`
+## 4. QVAC assistant (Phase 6)
 
 ```
-pear --version          # primer chequeo: ¿siquiera bootstrapea?
+bare index.js ask "how much did I sell today?"
+```
+
+The model download (773MB, over the same P2P network) never finished in the sandbox. With real network access it should complete (may take a while depending on bandwidth) and return a coherent answer based on the merchant's own data. If it takes more than 120s, raise `QVAC_LOAD_TIMEOUT_MS` in `.env`.
+
+- [x] The model download finishes. (2026-08-23: completed the 773MB over QVAC's P2P registry in ~3 minutes with real connectivity — longer than the original 120s timeout, which is why `QVAC_LOAD_TIMEOUT_MS` had to be raised to 600000 in `.env` before running it. The progress log confirms the download mechanism works (it climbed steadily from 0% to 100%), and then it loaded the model (`llama.cpp` logs repacking tensors) with no errors).
+- [~] The answer is coherent with the real data. (2026-08-23: **partially** — the pipeline works (returned text in Spanish, no crash), but the content wasn't fully accurate: for the question "how much did I sell today?", with a real paid invoice (5 USDT, `inv_64375ac6c4f9`, status `submitted`) in the context passed to it, the model answered that it "has no information about the transactions" and described the invoice as "pending" when it was actually paid, without summing the amount. This is expected given it's a very small model (1B parameters, Q4 quantized) — worth deciding whether it's good enough for the use case or whether a bigger model/different prompt is warranted, but **this is not a bug in the QVAC integration itself** — the download, load, and inference worked correctly end to end).
+
+## 5. Distribution with Pear (Phase 7) — not a single `pear` command had been run
+
+```
+pear --version          # first check: does it even bootstrap?
 pear stage dev
-pear run pear://<key-que-imprime-stage>   # desde otra carpeta/máquina
+pear run pear://<key-printed-by-stage>   # from another folder/machine
 ```
 
-Flujo completo de "producción" + actualización OTA:
+Full "production" + OTA update flow:
 
 ```
 pear stage production
 pear release production
 pear seed production
-# cambiás algo chico, repetís stage+seed, y confirmás que el peer que ya instaló recibe el cambio
+# change something small, repeat stage+seed, and confirm the peer that already installed receives the change
 ```
 
-Chequeo de seguridad importante:
+Important security check:
 
 ```
 pear info --manifest
 ```
 
-`pear.stage.ignore` ya está configurado para excluir `.env` y `.cliq/`, pero nunca se ejecutó este comando para confirmarlo.
+`pear.stage.ignore` is already configured to exclude `.env` and `.cliq/`, but this command had never been run to confirm it.
 
-- [x] `pear --version` bootstrapea correctamente. (2026-08-23: se instaló solo con `pnpm add -g pear`, primer `pear -v` dispara un bootstrap propio de Holepunch. Ojo: el flag correcto en esta versión (v3.2.0) es `-v`, no `--version`).
-- [x] `pear stage dev` + `pear run pear://...` funciona desde otra carpeta/máquina. (2026-08-23: **el CLI de Pear cambió dos veces respecto al checklist original**: (1) `pear stage dev` ya no acepta nombres de canal, pide un `<link>` generado con `pear touch`; (2) **`pear run` fue eliminado** — el CLI devuelve "pear run has been removed. Use the pear-runtime module instead". El equivalente que sí funciona para bajar+correr la app como otro peer es `pear dump <link> <dir>` seguido de `bare index.js help` desde esa carpeta — probado en `/tmp/pear-run-test` (otra carpeta, mismo host) y funcionó: trajo `src/`, `node_modules/`, etc., sin `.env` ni `.cliq/`, y el CLI corrió normal. Link final: `pear://dtb98ajx6wkg8cbw9zmpabd95ie4ipkj5dq18da3frk6o34ixczo`. Nota: fue en la misma máquina, no se probó cruzando dos hosts físicos distintos — si el proyecto sigue orientándose a apps de escritorio, revisar si conviene usar `pear install` en vez de `dump` para ese caso).
-- [~] Flujo `stage` → `release` → `seed` en producción funciona. (2026-08-23: **`pear release` fue eliminado por completo** en esta versión — `Unrecognized Argument`. El modelo de "canal de producción" del checklist original ya no existe así de simple: ahora "producción" se maneja con `pear provision <source-verlink> <target-link> <production-verlink>` + `pear multisig` (firma criptográfica por quorum, requiere configurar `multisig.publicKeys` / `namespace` / `quorum` en `pear.json`, que este proyecto no tiene). Es un cambio de flujo, no solo de sintaxis — requiere decisión de producto sobre si vale la pena montar multisig para este proyecto o si alcanza con seed/dump directo sobre un link único. `pear seed <link>` en sí sí funciona tal cual (probado, ver abajo) — lo que no existe es el paso intermedio de "release").
-- [x] Un cambio chico se propaga vía OTA a un peer que ya había instalado. (2026-08-23: se bumpeó `package.json` version 0.0.1→0.0.2, se re-stageó el mismo link con `pear stage <link> --only package.json` — pasó de versión interna 8498→8499 —, y desde la carpeta peer (`/tmp/pear-run-test`, que ya tenía la app) se corrió `pear dump <link> . --force`: solo resincronizó `/package.json` y el peer terminó con `0.0.2`. Se revirtió el version bump después de la prueba).
+- [x] `pear --version` bootstraps correctly. (2026-08-23: it installed with just `pnpm add -g pear`; the first `pear -v` triggers Holepunch's own bootstrap. Note: the correct flag in this version (v3.2.0) is `-v`, not `--version`).
+- [x] `pear stage dev` + `pear run pear://...` works from another folder/machine. (2026-08-23: **the Pear CLI changed in two ways compared to the original checklist**: (1) `pear stage dev` no longer accepts channel names, it wants a `<link>` generated with `pear touch`; (2) **`pear run` was removed** — the CLI returns "pear run has been removed. Use the pear-runtime module instead". The equivalent that does work to download+run the app like another peer is `pear dump <link> <dir>` followed by `bare index.js help` from that folder — tested in `/tmp/pear-run-test` (another folder, same host) and it worked: it brought `src/`, `node_modules/`, etc., without `.env` or `.cliq/`, and the CLI ran normally. Final link: `pear://dtb98ajx6wkg8cbw9zmpabd95ie4ipkj5dq18da3frk6o34ixczo`. Note: this was on the same machine, not tested across two different physical hosts — if the project keeps targeting desktop apps, worth checking whether `pear install` is a better fit than `dump` for that case).
+- [~] The `stage` → `release` → `seed` production flow works. (2026-08-23: **`pear release` was removed entirely** in this version — `Unrecognized Argument`. The original checklist's "production channel" model no longer exists in that simple form: "production" is now handled with `pear provision <source-verlink> <target-link> <production-verlink>` + `pear multisig` (quorum cryptographic signing, requires configuring `multisig.publicKeys` / `namespace` / `quorum` in `pear.json`, which this project doesn't have). This is a flow change, not just a syntax one — it needs a product decision about whether setting up multisig is worth it for this project, or whether direct seed/dump over a single link is enough. `pear seed <link>` itself does work as-is (tested, see below) — what doesn't exist anymore is the intermediate "release" step).
+- [x] A small change propagates via OTA to a peer that had already installed. (2026-08-23: bumped `package.json` version 0.0.1→0.0.2, re-staged the same link with `pear stage <link> --only package.json` — internal version went from 8498→8499 —, and from the peer folder (`/tmp/pear-run-test`, which already had the app) ran `pear dump <link> . --force`: it only resynced `/package.json` and the peer ended up on `0.0.2`. The version bump was reverted after the test).
 
-**`pear seed` (probado por separado):** `pear seed pear://dtb98ajx6wkg8cbw9zmpabd95ie4ipkj5dq18da3frk6o34ixczo --no-tty` corre, anuncia el link en la red y queda sirviendo bloques ("0 peers" porque no había otro nodo real conectándose, pero el anuncio y el logging de `whoami`/`discovery key`/etc. funcionaron sin errores).
-- [x] `pear info --manifest` NO lista `.env` ni `.cliq/`. (2026-08-23: confirmado — el manifiesto solo repite la config `pear.stage.ignore` de `package.json`; en el diff del stage no aparecieron esos archivos, solo `.env.example`).
+**`pear seed` (tested separately):** `pear seed pear://dtb98ajx6wkg8cbw9zmpabd95ie4ipkj5dq18da3frk6o34ixczo --no-tty` runs, announces the link on the network, and stays serving blocks ("0 peers" because there was no other real node connecting, but the announcement and the `whoami`/`discovery key`/etc. logging worked with no errors).
+- [x] `pear info --manifest` does NOT list `.env` or `.cliq/`. (2026-08-23: confirmed — the manifest only repeats the `pear.stage.ignore` config from `package.json`; the stage diff didn't show those files, only `.env.example`).
 
-**Nota sobre disco:** el `pear stage` de este proyecto sube `node_modules/` completo (incluidos los prebuilds nativos de `@qvac` para todas las plataformas) porque Pear empaqueta las dependencias para distribuir la app corriendo, no solo el código fuente. Esto hizo crecer el store interno de Pear (`~/.config/pear`) en ~3.4GB adicionales durante el staging. Disco libre bajó de 15GB (post `pnpm install`) a **7.6GB** tras este único `stage`. Si se van a hacer varios ciclos de `stage`/`release`/`seed`, conviene monitorear el disco o evaluar migrar a `@qvac/bare-sdk` antes de seguir.
+**Disk note:** this project's `pear stage` uploads the entire `node_modules/` (including `@qvac`'s native prebuilds for every platform) because Pear packages the dependencies to distribute the app running, not just the source code. This grew Pear's internal store (`~/.config/pear`) by ~3.4GB during staging. Free disk dropped from 15GB (post `pnpm install`) to **7.6GB** after this single `stage`. If several `stage`/`release`/`seed` cycles are planned, it's worth monitoring disk or considering a migration to `@qvac/bare-sdk` before continuing.
 
-**⚠️ No mover el store de Pear (`~/.config/pear`) a otro filesystem/dispositivo.** Se intentó reubicarlo a `/tmp` (otro device en este entorno) para liberar espacio, y Pear lo detectó y rompió el sidecar: `Error: Invalid device file, was modified` (graba un identificador de dispositivo en su RocksDB interno y se niega a arrancar si detecta que cambió). Hubo que descartar ese store (`rm -rf`, se perdió el link/versión ya stageado) y re-bootstrapear Pear desde cero. El store de **pnpm sí se pudo mover sin problema** (`pnpm store status` confirmó integridad tras el move) — la diferencia es de diseño: pnpm es puramente content-addressable, Pear ata su storage a un dispositivo físico. Si hace falta más espacio para Pear, la única vía segura es limpiar con `pear gc cores <link>` (borra cores huérfanos de un link específico) o reducir lo que se stagea, no reubicar el directorio.
+**⚠️ Don't move Pear's store (`~/.config/pear`) to another filesystem/device.** Relocating it to `/tmp` (a different device in this environment) was tried to free up space, and Pear detected it and broke the sidecar: `Error: Invalid device file, was modified` (it records a device identifier in its internal RocksDB and refuses to start if it detects it changed). That store had to be discarded (`rm -rf`, losing the already-staged link/version) and Pear had to be re-bootstrapped from scratch. **pnpm's store could be moved without issue** (`pnpm store status` confirmed integrity after the move) — the difference is by design: pnpm is purely content-addressable, Pear ties its storage to a physical device. If more space is needed for Pear, the only safe path is cleaning up with `pear gc cores <link>` (deletes orphaned cores for a specific link) or reducing what gets staged, not relocating the directory.
 
-## 6. Ya cerrado (no hace falta re-probar)
+## 6. Already closed (no need to re-test)
 
-- CLI completo sin red (`init`, `wallet address`, `invoice create/show`, `ledger`, `receipt show/verify`) — probado en vivo, incluida la detección de manipulación del ledger.
-- Toda la lógica de fusión P2P (firma, dedupe, conflictos) — probada simulando dos identidades directamente.
-- Responsive de la landing (320px a 1440px, claro y oscuro) — probado con Playwright, cero overflow.
+- Full offline CLI (`init`, `wallet address`, `invoice create/show`, `ledger`, `receipt show/verify`) — tested live, including ledger tamper detection.
+- All P2P merge logic (signature, dedupe, conflicts) — tested by simulating two identities directly.
+- Landing responsiveness (320px to 1440px, light and dark) — tested with Playwright, zero overflow.
 
-## 7. Multisig / producción con Pear — investigación para el futuro (no implementado)
+## 7. Multisig / production with Pear — future research (not implemented)
 
-**Decisión (2026-08-23): no se monta multisig por ahora.** Es infraestructura pensada para cuando varias partes independientes deben co-firmar antes de que un release llegue a producción (quorum N-de-M). Para el tamaño actual del proyecto, alcanza con seguir usando un único link estable vía `stage`+`seed` (ya validado en la sección 5). Trade-off a tener presente: sin multisig, cualquiera con acceso al link de staging puede publicar una actualización que los peers reciben automáticamente vía OTA, sin ninguna revisión intermedia. Si en el futuro entran más manos al proyecto o se necesita ese control, esto es lo que hay que armar:
+**Decision (2026-08-23): no multisig setup for now.** This is infrastructure meant for when several independent parties need to co-sign before a release reaches production (N-of-M quorum). At the project's current size, a single stable link via `stage`+`seed` is enough (already validated in section 5). Trade-off to keep in mind: without multisig, anyone with access to the staging link can publish an update that peers receive automatically via OTA, with no intermediate review. If more hands join the project in the future, or that control becomes necessary, here's what needs to be set up:
 
-### Cómo se configura (Pear v3.2.0)
+### How it's configured (Pear v3.2.0)
 
-1. **Definir el quorum en `pear.json`** (no existe en este proyecto todavía):
+1. **Define the quorum in `pear.json`** (doesn't exist in this project yet):
    ```json
    {
      "multisig": {
@@ -119,103 +119,107 @@ pear info --manifest
      }
    }
    ```
-   Con esto, 2 de 3 claves listadas deben firmar para que un release se considere válido.
+   With this, 2 of the 3 listed keys must sign for a release to be considered valid.
 
-2. **Generar/gestionar claves de firma**: `pear multisig keys <get|paths|list|add|remove>`. `get` inicializa una clave local si no existe; `paths` muestra dónde vive (pública/privada); cada persona que va a co-firmar necesita la suya, y su clave pública es la que se agrega a `publicKeys` en `pear.json`.
+2. **Generate/manage signing keys**: `pear multisig keys <get|paths|list|add|remove>`. `get` initializes a local key if one doesn't exist; `paths` shows where it lives (public/private); each person co-signing needs their own, and their public key is what gets added to `publicKeys` in `pear.json`.
 
-3. **Obtener el link multisig del proyecto**: `pear multisig link` — se deriva de `publicKeys` + `quorum` + `namespace` de `pear.json` (soporta `--vanity` para un prefijo elegido). Este es el link de "producción" que los usuarios finales van a instalar/seguir.
+3. **Get the project's multisig link**: `pear multisig link` — derived from `publicKeys` + `quorum` + `namespace` in `pear.json` (supports `--vanity` for a chosen prefix). This is the "production" link end users will install/follow.
 
-4. **Preparar un target pre-producción**: `pear touch` genera un link nuevo, y `pear provision <source-verlink> <target-link> <production-verlink>` sincroniza bloques desde el link de staging (versionado, ej. `pear://0.8499.<key>`) hacia ese target, dejándolo listo para pedir firmas contra el link de producción real.
+4. **Prepare a pre-production target**: `pear touch` generates a new link, and `pear provision <source-verlink> <target-link> <production-verlink>` syncs blocks from the staging link (versioned, e.g. `pear://0.8499.<key>`) to that target, leaving it ready to request signatures against the real production link.
 
-5. **Ciclo de firma**:
-   - `pear multisig request <verlink>` — crea una solicitud de firma para sincronizar un link versionado al link multisig del proyecto. Devuelve un `<request>` para repartir a los firmantes.
-   - `pear multisig sign <request> [nombre-clave=default]` — cada firmante corre esto con su clave local; devuelve una `response` de firma.
-   - `pear multisig verify <source-link> <request> [...responses]` — junta las respuestas recolectadas y hace un dry-run del commit para chequear que el quorum se cumple antes de aplicarlo de verdad.
-   - `pear multisig commit <source-link> <request> [...responses]` — aplica las firmas y habilita la sincronización real desde el link de staging hacia el link multisig (recién ahí el cambio queda "en producción").
+5. **Signing cycle**:
+   - `pear multisig request <verlink>` — creates a signing request to sync a versioned link to the project's multisig link. Returns a `<request>` to hand out to signers.
+   - `pear multisig sign <request> [key-name=default]` — each signer runs this with their local key; returns a signature `response`.
+   - `pear multisig verify <source-link> <request> [...responses]` — gathers the collected responses and dry-runs the commit to check the quorum is met before actually applying it.
+   - `pear multisig commit <source-link> <request> [...responses]` — applies the signatures and enables real syncing from the staging link to the multisig link (only then does the change land "in production").
 
-Ninguno de estos comandos se ejecutó en la práctica (solo se revisó su `--help`); si en el futuro se decide adoptarlo, falta un ensayo end-to-end con 2+ identidades de firma reales, similar a como se probó el sync P2P en la sección 3.
+None of these commands were run in practice (only their `--help` was checked); if this gets adopted in the future, an end-to-end trial with 2+ real signing identities is still needed, similar to how P2P sync was tested in section 3.
 
-## 8. Pear Track (Tether) — CLI instalable con `pear install` + OTA real
+## 8. Pear Track (Tether) — CLI installable with `pear install` + real OTA
 
-Track separado del hackathon con su propio brief: "Build a standalone CLI tool, deploy it with the Pear CLI, and make it installable with `pear install`, with peer-to-peer OTA updates", arrancando desde el boilerplate oficial `hello-pear-bare`. Vive en [`pear-cli/`](pear-cli/) (subcarpeta de este mismo repo) — detalle completo en [`pear-cli/README.md`](pear-cli/README.md). Esto es una entrega distinta a la sección 5 (que probaba el `stage`/`seed`/`dump` de la app "normal" corriendo con `bare`); acá el requisito duro es un **binario standalone real**, instalable sin Node/Bare/Pear.
+A separate hackathon track with its own brief: "Build a standalone CLI tool, deploy it with the Pear CLI, and make it installable with `pear install`, with peer-to-peer OTA updates", starting from the official `hello-pear-bare` boilerplate. Lives in [`pear-cli/`](pear-cli/) (a subfolder of this same repo) — full detail in [`pear-cli/README.md`](pear-cli/README.md). This is a different submission from section 5 (which tested `stage`/`seed`/`dump` for the "normal" app running under `bare`); here the hard requirement is a **real standalone binary**, installable without Node/Bare/Pear.
 
-- [x] Arranca desde `hello-pear-bare` rama `variant/daemon` (pensada para comandos cortos tipo git — el patrón real de uso de CLIQ), con el CLI real portado (todo menos `ask`/QVAC, excluido por el peso de `@qvac/sdk`).
-- [x] `bare-build` genera un binario standalone linux-x64 (~119MB) que corre sin ningún `node_modules` al lado — probado en una carpeta vacía.
-- [x] `pear install pear://<key>` instala de verdad, vía P2P real (con un `pear seed` corriendo), directo a `~/.local/bin/`. (2026-08-23: confirmado con `pear install` descargando a ~45MB/s desde el propio seed).
-- [x] **OTA real**: con una copia instalada en `0.0.4`, se stageó `0.0.5` en el mismo link, y la copia instalada se actualizó **sola** en ~2 segundos (`updating → updating-delta → updated → update-applied`, log real en `pear-cli/README.md`). Confirmado corriendo `--version` antes y después.
+- [x] Starts from `hello-pear-bare`'s `variant/daemon` branch (meant for short git-like commands — CLIQ's real usage pattern), with the real CLI ported over (everything except `ask`/QVAC, excluded due to `@qvac/sdk`'s weight).
+- [x] `bare-build` produces a standalone linux-x64 binary (~119MB) that runs with no `node_modules` alongside it — tested in an empty folder.
+- [x] `pear install pear://<key>` really installs, via real P2P (with a `pear seed` running), straight to `~/.local/bin/`. (2026-08-23: confirmed with `pear install` downloading at ~45MB/s from the seed itself).
+- [x] **Real OTA**: with a copy installed at `0.0.4`, `0.0.5` was staged on the same link, and the installed copy updated **itself** in ~2 seconds (`updating → updating-delta → updated → update-applied`, real log in `pear-cli/README.md`). Confirmed by running `--version` before and after.
+- [x] **win32-x64 (Windows), 2026-08-24**: the same binary built and validated end to end on a native Windows host (no WSL) — `bare-build`, `pear install` (~65MB real over P2P at ~15-18MB/s), and a real OTA (update detected and applied in ~3.4s). A third real bug found along the way, distinct from the two below: `package.json`'s `"upgrade"` field gets baked into the binary when it's compiled, and the first Windows build mistakenly inherited the original linux-x64 link (whose private key isn't available outside the session it was generated in) — the internal updater would never find anything, with no visible error. Fixed by generating its own link (`pear touch`) and rebuilding with `"upgrade"` corrected *before* the build. Full detail, including the real logs, in `pear-cli/README.md`, "Windows (win32-x64)" section.
 
-**Dos bugs reales encontrados y arreglados en el camino** (documentados con más detalle en `pear-cli/README.md`):
-1. `--update-window` es en **milisegundos**, no segundos — pasarle `90`/`180` (interpretados como 90-180ms) hacía que el updater se cerrara antes de que el swarm llegara a conectar con nada, pareciendo "no encuentra peers" cuando en realidad nunca tuvo tiempo de intentarlo.
-2. `bin.mjs` armaba el nombre del binario a buscar con `pkg.productName` ("cliq"), pero `pear install` arma esa ruta con `pkg.name` ("cliq-cli") — mismatch que tiraba `Error: update not found`. Se corrigió usando `pkg.name` consistentemente.
+**Two real bugs found and fixed along the way** (documented in more detail in `pear-cli/README.md`):
+1. `--update-window` is in **milliseconds**, not seconds — passing `90`/`180` (interpreted as 90-180*ms*) made the updater close before the swarm got a real chance to connect to anything, looking like "can't find peers" when it actually never had time to try.
+2. `bin.mjs` built the binary's expected name using `pkg.productName` ("cliq"), but `pear install` builds that path using `pkg.name` ("cliq-cli") — a mismatch that threw `Error: update not found`. Fixed by using `pkg.name` consistently.
 
-**Pendiente / limitaciones conocidas:**
-- Solo se buildeó **linux-x64** — este entorno no tiene los SDKs de macOS/Windows para cross-compilar con `bare-build`.
-- El `pear seed` de este link necesita seguir corriendo en una máquina que se mantenga prendida durante todo el judging — este sandbox es efímero, no sirve para eso.
-- Falta grabar el video demo (instalación + update OTA en vivo) — eso lo tiene que hacer el usuario.
+**Pending / known limitations:**
+- **macOS** is still missing — a host on that platform (or CI) is needed to cross-compile with `bare-build`. linux-x64 and win32-x64 are already covered.
+- The Windows build was published to a different Pear link (`pear://mp8yxd4xro9apkxpsgp34upeuqhdyhem64r7wbtqigjuac9qqemo`) than the original linux-x64 build (`pear://yfaoo...ixczo`), because that link's private key isn't available on the machine where the Windows build was done — see the note in `pear-cli/README.md`.
+- Each link's `pear seed` needs to keep running on a machine that stays on through judging — an ephemeral sandbox isn't enough for that.
+- Still need to record the demo video (install + live OTA update) — that's on the user to do.
 
-## 9. WDK Track (Tether) — Track 1: agente con guardrails sobre `@tetherto/wdk-cli` + MCP
+## 9. WDK Track (Tether) — Track 1: agent with guardrails over `@tetherto/wdk-cli` + MCP
 
-Track separado, mismo sponsor que Pears. Regla del brief: "Pick one prize track and go deep" — se arrancó por **Track 1 (CLI + MCP, $1000)** porque no dependía de ningún servicio externo nuevo. Track 2 (gasless) se retomó despues y tambien quedo resuelto — ver seccion 10.
+A separate track, same sponsor as Pears. Brief rule: "Pick one prize track and go deep" — started with **Track 1 (CLI + MCP, $1000)** because it didn't depend on any new external service. Track 2 (gasless) was picked up afterward and also got resolved — see section 10.
 
-**Qué se construyó**: `merchant agent settle <invoice-id> [--yes] [--json]` (`src/commands/agent.js`) — un comando nuevo que paga una factura de CLIQ usando `@tetherto/wdk-cli` (no el SDK crudo `@tetherto/wdk` que ya usa `pay.js` — es una pieza nueva y central, no un wrapper decorativo), con guardrails **en código, no en un prompt**:
-1. Tope de gasto (`AGENT_SPEND_CAP_USDT`) — rechazado antes de llamar a `wdk send` si la factura lo supera.
-2. Allowlist implícita — el destinatario es siempre `invoice.recipient`, nunca un parámetro libre.
-3. Confirmación explícita — sin `--yes` solo cotiza (`wdk send --dry-run`), igual patrón que `pay <id>`/`pay <id> --yes`.
+**What was built**: `merchant agent settle <invoice-id> [--yes] [--json]` (`src/commands/agent.js`) — a new command that pays a CLIQ invoice using `@tetherto/wdk-cli` (not the raw `@tetherto/wdk` SDK `pay.js` already uses — this is a new, central piece, not a decorative wrapper), with guardrails **in code, not in a prompt**:
+1. Spend cap (`AGENT_SPEND_CAP_USDT`) — rejected before calling `wdk send` if the invoice exceeds it.
+2. Implicit allowlist — the recipient is always `invoice.recipient`, never a free parameter.
+3. Explicit confirmation — without `--yes` it only quotes (`wdk send --dry-run`), same pattern as `pay <id>`/`pay <id> --yes`.
 
-Expuesto a un agente vía un servidor MCP propio (`mcp/server.js`, Node.js — no Bare, por compatibilidad con `@modelcontextprotocol/sdk`) con dos tools: `quote_invoice_payment` y `confirm_invoice_payment`. Cada una solo recibe un `invoiceId`; el servidor no reimplementa ninguna lógica, solo invoca `bare index.js agent settle ...` y devuelve el resultado.
+Exposed to an agent via a dedicated MCP server (`mcp/server.js`, Node.js — not Bare, for compatibility with `@modelcontextprotocol/sdk`) with two tools: `quote_invoice_payment` and `confirm_invoice_payment`. Each one only receives an `invoiceId`; the server doesn't reimplement any logic, it just invokes `bare index.js agent settle ...` and returns the result.
 
-**Validado de punta a punta (2026-08-23), contra la wallet real ya fondeada en Sepolia**:
-- [x] `wdk wallet import --seed-stdin` con el mismo `MERCHANT_SEED_PHRASE` de `.env` → misma wallet exacta confirmada (`wdk get address --index 1` devuelve `0x86aCC9bc...`, la misma que veníamos usando).
-- [x] `wdk get balance --token tpusdt --index 1` lee el balance real (990 tpUSDT, coincide con lo que quedó tras los pagos de la sección 2).
-- [x] `agent settle <id>` sin `--yes` cotiza vía `wdk send --dry-run` (monto + comisión real estimada), no manda nada.
-- [x] `agent settle <id> --yes` manda de verdad — `txHash` real, recibo firmado y encadenado igual que con `pay` (mismo `receipt verify` con firma y encadenamiento OK).
-- [x] Guardrail de tope: una factura de 50 USDT (tope configurado en 10) se rechaza **antes** de invocar `wdk send`, con o sin `--yes`.
-- [x] Probado tanto por CLI directa como a través del servidor MCP real (con un cliente MCP de prueba: `listTools` devuelve las dos tools, `callTool` en ambos casos — cotización y rechazo por guardrail — devuelve exactamente el mismo resultado que la CLI).
+**Validated end to end (2026-08-23), against the real wallet already funded on Sepolia**:
+- [x] `wdk wallet import --seed-stdin` with the same `MERCHANT_SEED_PHRASE` from `.env` → the exact same wallet confirmed (`wdk get address --index 1` returns `0x86aCC9bc...`, the one already in use).
+- [x] `wdk get balance --token tpusdt --index 1` reads the real balance (990 tpUSDT, matches what was left after section 2's payments).
+- [x] `agent settle <id>` without `--yes` quotes via `wdk send --dry-run` (amount + real estimated fee), sends nothing.
+- [x] `agent settle <id> --yes` really sends — real `txHash`, receipt signed and chained the same as with `pay` (same `receipt verify` with signature and chain link OK).
+- [x] Cap guardrail: a 50 USDT invoice (cap set at 10) gets rejected **before** invoking `wdk send`, with or without `--yes`.
+- [x] Tested both via direct CLI and through the real MCP server (with a test MCP client: `listTools` returns both tools, `callTool` in both cases — quote and cap rejection — returns exactly the same result as the CLI).
 
-**Hallazgo (no bloqueó Track 1, sí retrasó Track 2 hasta resolverlo)**: el token USD₮ "oficial" que `wdk-cli` reconoce built-in para Sepolia (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, el mismo que exige el paymaster público de Candide preconfigurado en la network `smart-account-sepolia`) tiene su función `mint` restringida a una wallet que no controlamos (`Ownable: caller is not the owner`, verificado con `eth_call` directo). Por eso el `agent settle` usa nuestro propio `ERC20Mock` de la sección 2 bajo un símbolo custom (`tpusdt`, agregado con `wdk token add`), no el `usdt` built-in. La solución real para conseguir el token oficial se encontró y se documenta en la sección 10.
+**Finding (didn't block Track 1, did delay Track 2 until resolved)**: the "official" USD₮ token `wdk-cli` recognizes built-in for Sepolia (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, the same one Candide's public paymaster preconfigured on the `smart-account-sepolia` network requires) has its `mint` function restricted to a wallet we don't control (`Ownable: caller is not the owner`, verified with a direct `eth_call`). That's why `agent settle` uses our own `ERC20Mock` from section 2 under a custom symbol (`tpusdt`, added with `wdk token add`), not the built-in `usdt`. The real fix to get the official token was found and is documented in section 10.
 
-## 10. WDK Track — Track 2: pago gasless (fee en USD₮, sin ETH)
+**Real Windows bug found and fixed (2026-08-24)**: `agent settle` and `gasless pay` (section 10) invoke `wdk-cli` with `spawnSync(bin, args, ...)` pointing straight at `node_modules/.bin/wdk` — on Linux/macOS that file is a `#!/bin/sh` script, executable as-is, but on Windows it's the same POSIX script (not natively executable) and the real binary to invoke is `wdk.CMD`. Without this fix, both commands failed on Windows with `wdk exited with code null` (a silent spawn, no useful message). Fixed in `src/commands/agent.js` and `src/commands/gasless.js` by detecting the platform (`require('bare-os').platform()`) and using `wdk.CMD` on `win32`. The MCP server (`mcp/server.js`) had the same problem resolving the `bare` binary (it only looked via `$HOME`, a Unix pattern, and `spawnSync('bare', ...)` without `shell:true` fails on Windows with `ENOENT` because `.cmd` doesn't resolve without a shell) — fixed by adding `bare.cmd` as a candidate and `shell: true` on Windows. Validated end to end on native Windows (no WSL): cap guardrail, real payment via `agent settle --yes`, and both MCP server tools tested with a real MCP client — same results as on Linux.
 
-**El mismo hallazgo de la sección 9 también bloqueaba Pimlico, no solo Candide**: se confirmó llamando directo al RPC público de Pimlico (`pimlico_getSupportedTokens` en `https://public.pimlico.io/v2/11155111/rpc`) que su paymaster de Sepolia también exige el mismo USD₮ oficial (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`) — cambiar de proveedor de paymaster no evitaba el problema.
+## 10. WDK Track — Track 2: gasless payment (fee in USD₮, no ETH)
 
-**Cómo se resolvió**: Pimlico tiene un **faucet de tokens de prueba** para su paymaster (`Claim Test ERC20 Tokens`, con precio de oráculo fijo en $1 para testing) que el usuario encontró y usó para reclamar 1000 USD₮ de prueba directo a `0x86aCC9bc5AF6d963F72B65Ba51354E50A32F4504` (la cuenta que ya usábamos). Confirmado con `wdk get balance --network sepolia --token usdt-official --index 1` → `1000 USDT`.
+**The same finding from section 9 also blocked Pimlico, not just Candide**: confirmed by calling Pimlico's public RPC directly (`pimlico_getSupportedTokens` at `https://public.pimlico.io/v2/11155111/rpc`) that its Sepolia paymaster also requires the same official USD₮ (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`) — switching paymaster providers didn't avoid the problem.
 
-**Config armada (real, sin adivinar nada — investigado en la documentación oficial de WDK y Pimlico antes de escribir cualquier valor)**:
-- Formato de URL de Pimlico (bundler y paymaster comparten la misma): `https://api.pimlico.io/v2/{chainId}/rpc?apikey={API_KEY}` — confirmado en `docs.pimlico.io/guides/tutorials/tutorial-2`.
-- La dirección del contrato paymaster **no es un valor fijo** — se obtiene con una llamada real a `pimlico_getTokenQuotes` (params: `[{tokens:[...]}, entryPointAddress, chainIdHex]`), que devolvió `0x777777777777AeC03fd955926DbF81597e66834C` para el USD₮ oficial en Sepolia.
-- Se creó una network custom en `wdk-cli` (`wdk network create`) llamada `smart-account-sepolia-pimlico`, módulo `@tetherto/wdk-wallet-evm-erc-4337`, con esos valores — ver el JSON completo en el README, sección WDK Track 2.
+**How it was resolved**: Pimlico has a **test token faucet** for its paymaster (`Claim Test ERC20 Tokens`, with a fixed oracle price of $1 for testing) that the user found and used to claim 1000 test USD₮ directly to `0x86aCC9bc5AF6d963F72B65Ba51354E50A32F4504` (the account already in use). Confirmed with `wdk get balance --network sepolia --token usdt-official --index 1` → `1000 USDT`.
 
-**Bug real encontrado**: subir `transferMaxFee` en el JSON de la network **no tuvo ningún efecto** en varios intentos (mismo error `Exceeded maximum fee cost for transfer operation` incluso con un tope absurdamente alto). La causa real: el daemon en background de `wdk-cli` (arrancado por `wallet unlock`) **cachea la configuración de networks al arrancar** y no la relee sola. Solución: `wdk wallet lock --all` + `wdk wallet unlock --name cliq --ttl 0` de nuevo despues de tocar `wdk network create`/`wdk token add` — recien ahi tomó el valor nuevo.
+**Config put together (real, nothing guessed — researched in WDK and Pimlico's official docs before writing any value)**:
+- Pimlico's URL format (bundler and paymaster share the same one): `https://api.pimlico.io/v2/{chainId}/rpc?apikey={API_KEY}` — confirmed at `docs.pimlico.io/guides/tutorials/tutorial-2`.
+- The paymaster contract address **isn't a fixed value** — it's obtained with a real call to `pimlico_getTokenQuotes` (params: `[{tokens:[...]}, entryPointAddress, chainIdHex]`), which returned `0x777777777777AeC03fd955926DbF81597e66834C` for the official USD₮ on Sepolia.
+- A custom network was created in `wdk-cli` (`wdk network create`) called `smart-account-sepolia-pimlico`, module `@tetherto/wdk-wallet-evm-erc-4337`, with those values — see the full JSON in the README, WDK Track 2 section.
 
-**Validado de punta a punta, con dinero real en Sepolia**:
-- [x] La cuenta inteligente (ERC-4337) tiene una **dirección distinta** a la wallet normal derivada del mismo seed (`0x8469a1A3...` vs `0x86aCC9bc...` — confirmado, no es un descuido).
-- [x] Se transfirieron 100 USD₮ desde la wallet normal a la cuenta inteligente (unico paso que sí costó ETH — el "onboarding" de fondos).
-- [x] Balance de ETH de la cuenta inteligente confirmado en **0** en todo momento.
-- [x] Cotización (`--dry-run`) y envío real (`wdk send`, y tambien `merchant gasless pay <id> --yes`) funcionaron sin ETH, con el fee cobrado en USD₮ — `txHash` real, y el balance de USD₮ del destinatario subió exactamente lo esperado.
-- [x] **`merchant gasless pay <invoice-id> [--yes]`** (`src/commands/gasless.js`, nuevo comando de producto, mismo patrón que `agent.js`): cotiza y paga una factura real de CLIQ por esta vía, generando el mismo recibo firmado y encadenado que `pay`/`agent settle` (`receipt verify` con firma y encadenamiento OK).
+**Real bug found**: raising `transferMaxFee` in the network's JSON **had no effect** across several attempts (same `Exceeded maximum fee cost for transfer operation` error even with an absurdly high cap). Real cause: `wdk-cli`'s background daemon (started by `wallet unlock`) **caches the network config on startup** and doesn't reread it on its own. Fix: `wdk wallet lock --all` + `wdk wallet unlock --name cliq --ttl 0` again after touching `wdk network create`/`wdk token add` — only then did it pick up the new value.
 
-## 11. QVAC Track (Tether) — Track 1: reconciliación de comprobantes (OCR + LLM local)
+**Validated end to end, with real money on Sepolia**:
+- [x] The smart account (ERC-4337) has a **different address** from the normal wallet derived from the same seed (`0x8469a1A3...` vs `0x86aCC9bc...` — confirmed, not an oversight).
+- [x] 100 USD₮ were transferred from the normal wallet to the smart account (the only step that did cost ETH — the funds "onboarding" step).
+- [x] The smart account's ETH balance confirmed at **0** at all times.
+- [x] Quote (`--dry-run`) and real send (`wdk send`, and also `merchant gasless pay <id> --yes`) worked with no ETH, with the fee charged in USD₮ — real `txHash`, and the recipient's USD₮ balance went up by exactly the expected amount.
+- [x] **`merchant gasless pay <invoice-id> [--yes]`** (`src/commands/gasless.js`, new product command, same pattern as `agent.js`): quotes and pays a real CLIQ invoice through this path, generating the same signed and chained receipt as `pay`/`agent settle` (`receipt verify` with signature and chain link OK).
 
-Track separado de WDK/Pears, mismo sponsor. Brief: "Local agents that replace operations work", caso insignia explícito: reconciliación de facturas via OCR. Se construyó `merchant reconcile <invoice-id> <ruta-imagen> [--json]` sobre el dominio real de CLIQ (facturas), no como demo aislada.
+## 11. QVAC Track (Tether) — Track 1: receipt reconciliation (OCR + local LLM)
 
-**Qué se construyó**: `src/ai/qvac.js` ganó dos funciones nuevas sobre el mismo runtime QVAC que ya usaba `ask` — `ocrImage(imagePath)` (carga `OCR_LATIN`/EasyOCR vía el nuevo addon `@qvac/ocr-ggml`, corre `sdk.ocr(...)`) y `reconcileReceipt(invoice, ocrText)` (carga el mismo `LLAMA_3_2_1B_INST_Q4_0` de `ask`, le pide que extraiga el monto del texto OCR y compare contra la factura). `src/commands/reconcile.js` encadena ambos pasos y nunca cambia el estado de la factura — es una lectura asistida para que decida un humano.
+A separate track from WDK/Pears, same sponsor. Brief: "Local agents that replace operations work", explicit flagship use case: invoice reconciliation via OCR. Built `merchant reconcile <invoice-id> <image-path> [--json]` on top of CLIQ's real domain (invoices), not as a standalone demo.
 
-**Hallazgo real de fiabilidad (encontrado en la primera corrida, no simulado)**: se le pasó un comprobante sintético con `Monto: 12 USDT` contra una factura de `5 USDT`. El modelo extrajo el monto correctamente (`MONTO_DETECTADO: 12`) pero declaró `VEREDICTO: COINCIDE` — extrae bien, compara mal, exactamente el tipo de falla que advierte el brief para modelos chicos. **Solución de fiabilidad, no de prompt**: se agregó `computeVerdict()` en `src/ai/qvac.js`, que ignora el veredicto del modelo y calcula `COINCIDE`/`NO_COINCIDE`/`INCIERTO` en código comparando el monto extraído contra `invoice.amount`. El veredicto del modelo se conserva aparte (`modelVerdict`) solo para detectar y exponer el desacuerdo (`modelDisagreed: true`), nunca para decidir — mismo principio de "guardrail en código, no en el prompt" que `agent.js` (WDK Track 1).
+**What was built**: `src/ai/qvac.js` gained two new functions on top of the same QVAC runtime `ask` already used — `ocrImage(imagePath)` (loads `OCR_LATIN`/EasyOCR via the new `@qvac/ocr-ggml` addon, runs `sdk.ocr(...)`) and `reconcileReceipt(invoice, ocrText)` (loads the same `LLAMA_3_2_1B_INST_Q4_0` from `ask`, asks it to extract the amount from the OCR text and compare it against the invoice). `src/commands/reconcile.js` chains both steps and never changes the invoice's status — it's an assisted read for a human to decide on.
 
-**Validado de punta a punta (2026-08-23), con comprobantes sintéticos generados para la prueba** (sin cámara en este entorno de desarrollo — se genera con PIL, texto renderizado, no una foto real; documentado como lo que es):
-- [x] Comprobante limpio, monto correcto (`5 USDT` vs factura de `5 USDT`) → OCR detecta 4 bloques, modelo extrae `5`, veredicto `COINCIDE`, `modelDisagreed: false`.
-- [x] Mismo comprobante rotado 3° + ruido + blur gaussiano (simulando foto con mala luz) → OCR sigue leyendo el texto completo (1 bloque en vez de 4, pero íntegro) → `COINCIDE`.
-- [x] Comprobante con monto distinto (`12 USDT` vs factura de `5 USDT`) → el bug de arriba: modelo dice `COINCIDE`, código calcula `NO_COINCIDE` (correcto) y marca `modelDisagreed: true`.
-- [x] Imagen en blanco (sin texto) → falla explícito ("no se detectó texto legible"), 0 bloques, no llega a invocar el modelo de texto.
-- [x] `invoice-id` inexistente → falla antes de tocar OCR. Ruta de imagen inexistente → falla antes de tocar OCR.
-- [x] Reintento de formato: `reconcileReceipt` pide al modelo 3 líneas con etiquetas fijas (`VEREDICTO`/`MONTO_DETECTADO`/`EXPLICACION`) en vez de JSON libre (un modelo de 1B falla seguido generando JSON válido); si el parseo falla reintenta una vez con un prompt más estricto antes de devolver `INCIERTO` en vez de inventar un resultado. En las 4 corridas de arriba, el modelo respondió en el formato esperado al primer intento (`modelAttempts: 1`).
+**Real reliability finding (found on the first run, not simulated)**: a synthetic receipt reading `Amount: 12 USDT` was passed against a `5 USDT` invoice. The model correctly extracted the amount (`AMOUNT_DETECTED: 12`) but declared `VERDICT: MATCH` — good at extraction, bad at comparison, exactly the kind of failure the brief warns about for small models. **Reliability fix, not a prompt fix**: `computeVerdict()` was added in `src/ai/qvac.js`, which ignores the model's verdict and computes `MATCH`/`NO_MATCH`/`UNCERTAIN` in code, comparing the extracted amount against `invoice.amount`. The model's own verdict is kept separately (`modelVerdict`) only to detect and expose disagreement (`modelDisagreed: true`), never to decide — same "guardrail in code, not in the prompt" principle as `agent.js` (WDK Track 1).
 
-**Modelo y hardware**: `OCR_LATIN` (EasyOCR, ~15MB detector CRAFT + ~83MB reconocedor, resueltos automáticamente por el registry) y `LLAMA_3_2_1B_INST_Q4_0` (1B, Q4), ambos vía `@qvac/sdk` sobre Bare. Contenedor de 4 vCPU (AMD EPYC 9V74), 15GB RAM, sin GPU (`no usable GPU found`, confirmado en el log de `llama.cpp`). Una corrida completa (cargar OCR, leer imagen, descargar ambos modelos de memoria, cargar LLM, reconciliar, descargar de memoria — sin daemon persistente) tardó **~24s** medido con `time`.
+**Validated end to end (2026-08-23), with synthetic receipts generated for the test** (no camera in this dev environment — generated with PIL, rendered text, not a real photo; documented as what it is):
+- [x] Clean receipt, correct amount (`5 USDT` vs a `5 USDT` invoice) → OCR detects 4 blocks, model extracts `5`, verdict `MATCH`, `modelDisagreed: false`.
+- [x] Same receipt rotated 3° + noise + Gaussian blur (simulating a poorly-lit photo) → OCR still reads the full text (1 block instead of 4, but complete) → `MATCH`.
+- [x] Receipt with a different amount (`12 USDT` vs a `5 USDT` invoice) → the bug from above: model says `MATCH`, code computes `NO_MATCH` (correct) and flags `modelDisagreed: true`.
+- [x] Blank image (no text) → explicit failure ("no legible text detected"), 0 blocks, doesn't even invoke the text model.
+- [x] Nonexistent `invoice-id` → fails before touching OCR. Nonexistent image path → fails before touching OCR.
+- [x] Format retry: `reconcileReceipt` asks the model for 3 lines with fixed labels (`VERDICT`/`AMOUNT_DETECTED`/`EXPLANATION`) instead of free-form JSON (a 1B model often fails to generate valid JSON); if parsing fails it retries once with a stricter prompt before returning `UNCERTAIN` instead of inventing a result. In the 4 runs above, the model answered in the expected format on the first try (`modelAttempts: 1`).
 
-**Limitación honesta**: las explicaciones en español que da el modelo a veces son imprecisas incluso cuando el veredicto (calculado en código) es correcto — ej. dijo "el monto no es claro" en una corrida donde sí lo había extraído bien. No afecta la decisión (el veredicto no depende de la explicación), pero es una limitación real del modelo de 1B generando texto libre, documentada tal cual en vez de ocultada.
+**Model and hardware**: `OCR_LATIN` (EasyOCR, ~15MB CRAFT detector + ~83MB recognizer, resolved automatically by the registry) and `LLAMA_3_2_1B_INST_Q4_0` (1B, Q4), both via `@qvac/sdk` over Bare. 4-vCPU (AMD EPYC 9V74), 15GB RAM container, no GPU (`no usable GPU found`, confirmed in the `llama.cpp` log). A full run (load OCR, read image, unload both models from memory, load LLM, reconcile, unload from memory — no persistent daemon) took **~24s** measured with `time`.
 
-## Orden sugerido
+**Honest limitation**: the Spanish explanations the model gives are sometimes imprecise even when the verdict (computed in code) is correct — e.g. it said "the amount isn't clear" in a run where it had actually extracted it correctly. It doesn't affect the decision (the verdict doesn't depend on the explanation), but it's a real limitation of the 1B model generating free-form text, documented as such rather than hidden.
 
-1. **#2 Pagos** (WDK contra red real).
-2. **#5 Pear** — es la más "nueva", nunca corrió ni una vez.
-3. **#3 Sync** — dejarla para el final porque necesita coordinar dos máquinas al mismo tiempo.
+## Suggested order
+
+1. **#2 Payments** (WDK against the real network).
+2. **#5 Pear** — the "newest" one, never run even once.
+3. **#3 Sync** — save for last since it needs coordinating two machines at the same time.
