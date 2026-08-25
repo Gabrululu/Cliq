@@ -1,6 +1,6 @@
-# CLIQ CLI — Pear Track submission
+# CLIQ CLI — standalone installable build
 
-Submission for the "Pears" (Tether) track of Aleph Hackathon 2026: CLIQ's real CLI ([CLIQ](../README.md)) packaged as a standalone binary, P2P-installable with `pear install`, with OTA updates.
+CLIQ's real CLI ([CLIQ](../README.md)) packaged as a standalone binary, P2P-installable with `pear install`, with OTA updates.
 
 ## Where it starts from
 
@@ -17,9 +17,9 @@ Includes all of CLIQ **except the `ask` assistant (QVAC)**:
 - `receipt show/verify`
 - `sync --room`, `peers --room`
 
-`ask` was excluded because `@qvac/sdk` weighs ~6GB with native binaries for every platform — it's the biggest risk of the standalone build (`bare-build`) failing or taking too long under the hackathon's deadline, and it adds nothing to validating "installs + updates OTA", which is what this track asks for.
+`ask` was excluded because `@qvac/sdk` weighs ~6GB with native binaries for every platform — it's the biggest risk of the standalone build (`bare-build`) failing or taking too long, and it adds nothing to validating installs + OTA updates.
 
-## How to install it (the same way a judge would)
+## How to install it
 
 ```
 pear install pear://mp8yxd4xro9apkxpsgp34upeuqhdyhem64r7wbtqigjuac9qqemo
@@ -99,7 +99,7 @@ Detection + download + full application in ~3.4s once the swarm connected to the
 
 ## Keeping it seeded
 
-While this track is being evaluated, a `pear seed` needs to keep running on a machine that stays on (this ephemeral sandbox isn't enough for that):
+A `pear seed` needs to keep running on a machine that stays on for `pear install` to keep working for others (an ephemeral dev sandbox isn't enough for that):
 
 ```
 pear seed pear://mp8yxd4xro9apkxpsgp34upeuqhdyhem64r7wbtqigjuac9qqemo --no-tty

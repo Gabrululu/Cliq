@@ -1,6 +1,6 @@
 # Real-network validation checklist
 
-This checklist gathers everything that was flagged as "not tested by the sandbox's network" across the 7 phases. Use `pnpm` instead of `npm` except where noted otherwise (the global `bare`/`pear` tools and the `bare`/`pear` commands themselves).
+This checklist gathers everything that needed validation against real infrastructure, feature by feature. Use `pnpm` instead of `npm` except where noted otherwise (the global `bare`/`pear` tools and the `bare`/`pear` commands themselves).
 
 ## 1. Clean install (never done from scratch on another machine)
 
@@ -15,7 +15,7 @@ bare index.js help
 - [x] Confirm no setup step is missing that was assumed by an already semi-configured environment. (2026-08-23: there was one undocumented extra step — `pnpm setup` to create `PNPM_HOME`, since `pnpm add -g` failed with `ERR_PNPM_NO_GLOBAL_BIN_DIR` without it).
 - [x] Confirm disk space available for `@qvac/sdk` (or decide to migrate to `@qvac/bare-sdk`). (2026-08-23: `node_modules` ended up at 4.4GB, 15GB free after install — no need to migrate).
 
-## 2. Real payments with WDK (Phase 2-3)
+## 2. Real payments with WDK
 
 Never tested against a real network before — the sandbox blocked all outbound RPC connections.
 
@@ -35,7 +35,7 @@ Needed: a working testnet RPC, the `--from-index 1` wallet funded with test USDT
 
 Note: the second contract the user passed in (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, "Tether USD", `TransparentUpgradeableProxy`) wasn't used — it has no known public `mint`, while `0xc4dcc311c028e341fd8602d8eb89c5de94625927` is a verified `ERC20Mock` with an unrestricted `mint(address,uint256)`, ideal for self-funding with test tokens.
 
-## 3. P2P synchronization (Phase 5) — needs two machines or folders
+## 3. P2P synchronization — needs two machines or folders
 
 ```
 # Terminal/machine A
@@ -49,7 +49,7 @@ bare index.js sync --room demo
 - [x] Events from one side show up in the other's ledger. (2026-08-23: each peer created a unique `invoice_paid` event — `inv_a_only` on A, `inv_b_only` on B — directly via `ledger.createEvent` (without going through a real payment, to isolate the sync/merge test from the WDK test already covered in #2). After `sync`, both ledgers ended up with all 4 receipts: their own 2 + the other merchant's 2, verified with `merchant ledger` on both sides).
 - [x] Deliberately trigger a conflict (same `invoiceId`, two different `txHash` values from different merchants) and confirm `sync` reports it instead of silently overwriting it. (2026-08-23: both peers created an event with `invoiceId: inv_conflict_test` but a different `txHash`. After sync, **both sides correctly reported the conflict** in the "Conflicts detected" section with both `receipt_id`/`txHash`/merchant pairs facing off, and neither event got overwritten — both stayed stored in both peers' ledgers).
 
-## 4. QVAC assistant (Phase 6)
+## 4. QVAC assistant
 
 ```
 bare index.js ask "how much did I sell today?"
@@ -60,7 +60,7 @@ The model download (773MB, over the same P2P network) never finished in the sand
 - [x] The model download finishes. (2026-08-23: completed the 773MB over QVAC's P2P registry in ~3 minutes with real connectivity — longer than the original 120s timeout, which is why `QVAC_LOAD_TIMEOUT_MS` had to be raised to 600000 in `.env` before running it. The progress log confirms the download mechanism works (it climbed steadily from 0% to 100%), and then it loaded the model (`llama.cpp` logs repacking tensors) with no errors).
 - [~] The answer is coherent with the real data. (2026-08-23: **partially** — the pipeline works (returned text in Spanish, no crash), but the content wasn't fully accurate: for the question "how much did I sell today?", with a real paid invoice (5 USDT, `inv_64375ac6c4f9`, status `submitted`) in the context passed to it, the model answered that it "has no information about the transactions" and described the invoice as "pending" when it was actually paid, without summing the amount. This is expected given it's a very small model (1B parameters, Q4 quantized) — worth deciding whether it's good enough for the use case or whether a bigger model/different prompt is warranted, but **this is not a bug in the QVAC integration itself** — the download, load, and inference worked correctly end to end).
 
-## 5. Distribution with Pear (Phase 7) — not a single `pear` command had been run
+## 5. Distribution with Pear — not a single `pear` command had been run
 
 ```
 pear --version          # first check: does it even bootstrap?
@@ -135,9 +135,9 @@ pear info --manifest
 
 None of these commands were run in practice (only their `--help` was checked); if this gets adopted in the future, an end-to-end trial with 2+ real signing identities is still needed, similar to how P2P sync was tested in section 3.
 
-## 8. Pear Track (Tether) — CLI installable with `pear install` + real OTA
+## 8. Standalone installable CLI (`pear install` + real OTA)
 
-A separate hackathon track with its own brief: "Build a standalone CLI tool, deploy it with the Pear CLI, and make it installable with `pear install`, with peer-to-peer OTA updates", starting from the official `hello-pear-bare` boilerplate. Lives in [`pear-cli/`](pear-cli/) (a subfolder of this same repo) — full detail in [`pear-cli/README.md`](pear-cli/README.md). This is a different submission from section 5 (which tested `stage`/`seed`/`dump` for the "normal" app running under `bare`); here the hard requirement is a **real standalone binary**, installable without Node/Bare/Pear.
+A standalone CLI build, deployed with the Pear CLI and installable with `pear install`, with peer-to-peer OTA updates — starting from the official `hello-pear-bare` boilerplate. Lives in [`pear-cli/`](pear-cli/) (a subfolder of this same repo) — full detail in [`pear-cli/README.md`](pear-cli/README.md). This is different from section 5 (which tested `stage`/`seed`/`dump` for the "normal" app running under `bare`); here the hard requirement is a **real standalone binary**, installable without Node/Bare/Pear.
 
 - [x] Starts from `hello-pear-bare`'s `variant/daemon` branch (meant for short git-like commands — CLIQ's real usage pattern), with the real CLI ported over (everything except `ask`/QVAC, excluded due to `@qvac/sdk`'s weight).
 - [x] `bare-build` produces a standalone linux-x64 binary (~119MB) that runs with no `node_modules` alongside it — tested in an empty folder.
@@ -152,12 +152,11 @@ A separate hackathon track with its own brief: "Build a standalone CLI tool, dep
 **Pending / known limitations:**
 - **macOS** is still missing — a host on that platform (or CI) is needed to cross-compile with `bare-build`. linux-x64 and win32-x64 are already covered.
 - The Windows build was published to a different Pear link (`pear://mp8yxd4xro9apkxpsgp34upeuqhdyhem64r7wbtqigjuac9qqemo`) than the original linux-x64 build (`pear://yfaoo...ixczo`), because that link's private key isn't available on the machine where the Windows build was done — see the note in `pear-cli/README.md`.
-- Each link's `pear seed` needs to keep running on a machine that stays on through judging — an ephemeral sandbox isn't enough for that.
-- Still need to record the demo video (install + live OTA update) — that's on the user to do.
+- Each link's `pear seed` needs to keep running on a machine that stays on — an ephemeral sandbox isn't enough for that.
 
-## 9. WDK Track (Tether) — Track 1: agent with guardrails over `@tetherto/wdk-cli` + MCP
+## 9. AI agent payments — agent with guardrails over `@tetherto/wdk-cli` + MCP
 
-A separate track, same sponsor as Pears. Brief rule: "Pick one prize track and go deep" — started with **Track 1 (CLI + MCP, $1000)** because it didn't depend on any new external service. Track 2 (gasless) was picked up afterward and also got resolved — see section 10.
+Started with the CLI + MCP integration because it didn't depend on any new external service. Gasless payments were picked up afterward and also got resolved — see section 10.
 
 **What was built**: `merchant agent settle <invoice-id> [--yes] [--json]` (`src/commands/agent.js`) — a new command that pays a CLIQ invoice using `@tetherto/wdk-cli` (not the raw `@tetherto/wdk` SDK `pay.js` already uses — this is a new, central piece, not a decorative wrapper), with guardrails **in code, not in a prompt**:
 1. Spend cap (`AGENT_SPEND_CAP_USDT`) — rejected before calling `wdk send` if the invoice exceeds it.
@@ -174,11 +173,11 @@ Exposed to an agent via a dedicated MCP server (`mcp/server.js`, Node.js — not
 - [x] Cap guardrail: a 50 USDT invoice (cap set at 10) gets rejected **before** invoking `wdk send`, with or without `--yes`.
 - [x] Tested both via direct CLI and through the real MCP server (with a test MCP client: `listTools` returns both tools, `callTool` in both cases — quote and cap rejection — returns exactly the same result as the CLI).
 
-**Finding (didn't block Track 1, did delay Track 2 until resolved)**: the "official" USD₮ token `wdk-cli` recognizes built-in for Sepolia (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, the same one Candide's public paymaster preconfigured on the `smart-account-sepolia` network requires) has its `mint` function restricted to a wallet we don't control (`Ownable: caller is not the owner`, verified with a direct `eth_call`). That's why `agent settle` uses our own `ERC20Mock` from section 2 under a custom symbol (`tpusdt`, added with `wdk token add`), not the built-in `usdt`. The real fix to get the official token was found and is documented in section 10.
+**Finding (didn't block agent payments, did delay gasless payments until resolved)**: the "official" USD₮ token `wdk-cli` recognizes built-in for Sepolia (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`, the same one Candide's public paymaster preconfigured on the `smart-account-sepolia` network requires) has its `mint` function restricted to a wallet we don't control (`Ownable: caller is not the owner`, verified with a direct `eth_call`). That's why `agent settle` uses our own `ERC20Mock` from section 2 under a custom symbol (`tpusdt`, added with `wdk token add`), not the built-in `usdt`. The real fix to get the official token was found and is documented in section 10.
 
 **Real Windows bug found and fixed (2026-08-24)**: `agent settle` and `gasless pay` (section 10) invoke `wdk-cli` with `spawnSync(bin, args, ...)` pointing straight at `node_modules/.bin/wdk` — on Linux/macOS that file is a `#!/bin/sh` script, executable as-is, but on Windows it's the same POSIX script (not natively executable) and the real binary to invoke is `wdk.CMD`. Without this fix, both commands failed on Windows with `wdk exited with code null` (a silent spawn, no useful message). Fixed in `src/commands/agent.js` and `src/commands/gasless.js` by detecting the platform (`require('bare-os').platform()`) and using `wdk.CMD` on `win32`. The MCP server (`mcp/server.js`) had the same problem resolving the `bare` binary (it only looked via `$HOME`, a Unix pattern, and `spawnSync('bare', ...)` without `shell:true` fails on Windows with `ENOENT` because `.cmd` doesn't resolve without a shell) — fixed by adding `bare.cmd` as a candidate and `shell: true` on Windows. Validated end to end on native Windows (no WSL): cap guardrail, real payment via `agent settle --yes`, and both MCP server tools tested with a real MCP client — same results as on Linux.
 
-## 10. WDK Track — Track 2: gasless payment (fee in USD₮, no ETH)
+## 10. Gasless payments (fee in USD₮, no ETH)
 
 **The same finding from section 9 also blocked Pimlico, not just Candide**: confirmed by calling Pimlico's public RPC directly (`pimlico_getSupportedTokens` at `https://public.pimlico.io/v2/11155111/rpc`) that its Sepolia paymaster also requires the same official USD₮ (`0xd077A400968890Eacc75cdc901F0356c943e4fDb`) — switching paymaster providers didn't avoid the problem.
 
@@ -187,7 +186,7 @@ Exposed to an agent via a dedicated MCP server (`mcp/server.js`, Node.js — not
 **Config put together (real, nothing guessed — researched in WDK and Pimlico's official docs before writing any value)**:
 - Pimlico's URL format (bundler and paymaster share the same one): `https://api.pimlico.io/v2/{chainId}/rpc?apikey={API_KEY}` — confirmed at `docs.pimlico.io/guides/tutorials/tutorial-2`.
 - The paymaster contract address **isn't a fixed value** — it's obtained with a real call to `pimlico_getTokenQuotes` (params: `[{tokens:[...]}, entryPointAddress, chainIdHex]`), which returned `0x777777777777AeC03fd955926DbF81597e66834C` for the official USD₮ on Sepolia.
-- A custom network was created in `wdk-cli` (`wdk network create`) called `smart-account-sepolia-pimlico`, module `@tetherto/wdk-wallet-evm-erc-4337`, with those values — see the full JSON in the README, WDK Track 2 section.
+- A custom network was created in `wdk-cli` (`wdk network create`) called `smart-account-sepolia-pimlico`, module `@tetherto/wdk-wallet-evm-erc-4337`, with those values — see the full JSON in the README, "Gasless payments" section.
 
 **Real bug found**: raising `transferMaxFee` in the network's JSON **had no effect** across several attempts (same `Exceeded maximum fee cost for transfer operation` error even with an absurdly high cap). Real cause: `wdk-cli`'s background daemon (started by `wallet unlock`) **caches the network config on startup** and doesn't reread it on its own. Fix: `wdk wallet lock --all` + `wdk wallet unlock --name cliq --ttl 0` again after touching `wdk network create`/`wdk token add` — only then did it pick up the new value.
 
@@ -198,13 +197,13 @@ Exposed to an agent via a dedicated MCP server (`mcp/server.js`, Node.js — not
 - [x] Quote (`--dry-run`) and real send (`wdk send`, and also `merchant gasless pay <id> --yes`) worked with no ETH, with the fee charged in USD₮ — real `txHash`, and the recipient's USD₮ balance went up by exactly the expected amount.
 - [x] **`merchant gasless pay <invoice-id> [--yes]`** (`src/commands/gasless.js`, new product command, same pattern as `agent.js`): quotes and pays a real CLIQ invoice through this path, generating the same signed and chained receipt as `pay`/`agent settle` (`receipt verify` with signature and chain link OK).
 
-## 11. QVAC Track (Tether) — Track 1: receipt reconciliation (OCR + local LLM)
+## 11. Receipt reconciliation (OCR + local LLM)
 
-A separate track from WDK/Pears, same sponsor. Brief: "Local agents that replace operations work", explicit flagship use case: invoice reconciliation via OCR. Built `merchant reconcile <invoice-id> <image-path> [--json]` on top of CLIQ's real domain (invoices), not as a standalone demo.
+Invoice reconciliation via OCR, built `merchant reconcile <invoice-id> <image-path> [--json]` on top of CLIQ's real domain (invoices), not as a standalone demo.
 
 **What was built**: `src/ai/qvac.js` gained two new functions on top of the same QVAC runtime `ask` already used — `ocrImage(imagePath)` (loads `OCR_LATIN`/EasyOCR via the new `@qvac/ocr-ggml` addon, runs `sdk.ocr(...)`) and `reconcileReceipt(invoice, ocrText)` (loads the same `LLAMA_3_2_1B_INST_Q4_0` from `ask`, asks it to extract the amount from the OCR text and compare it against the invoice). `src/commands/reconcile.js` chains both steps and never changes the invoice's status — it's an assisted read for a human to decide on.
 
-**Real reliability finding (found on the first run, not simulated)**: a synthetic receipt reading `Amount: 12 USDT` was passed against a `5 USDT` invoice. The model correctly extracted the amount (`AMOUNT_DETECTED: 12`) but declared `VERDICT: MATCH` — good at extraction, bad at comparison, exactly the kind of failure the brief warns about for small models. **Reliability fix, not a prompt fix**: `computeVerdict()` was added in `src/ai/qvac.js`, which ignores the model's verdict and computes `MATCH`/`NO_MATCH`/`UNCERTAIN` in code, comparing the extracted amount against `invoice.amount`. The model's own verdict is kept separately (`modelVerdict`) only to detect and expose disagreement (`modelDisagreed: true`), never to decide — same "guardrail in code, not in the prompt" principle as `agent.js` (WDK Track 1).
+**Real reliability finding (found on the first run, not simulated)**: a synthetic receipt reading `Amount: 12 USDT` was passed against a `5 USDT` invoice. The model correctly extracted the amount (`AMOUNT_DETECTED: 12`) but declared `VERDICT: MATCH` — good at extraction, bad at comparison, exactly the kind of failure small models are known for. **Reliability fix, not a prompt fix**: `computeVerdict()` was added in `src/ai/qvac.js`, which ignores the model's verdict and computes `MATCH`/`NO_MATCH`/`UNCERTAIN` in code, comparing the extracted amount against `invoice.amount`. The model's own verdict is kept separately (`modelVerdict`) only to detect and expose disagreement (`modelDisagreed: true`), never to decide — same "guardrail in code, not in the prompt" principle as `agent.js` (section 9).
 
 **Validated end to end (2026-08-23), with synthetic receipts generated for the test** (no camera in this dev environment — generated with PIL, rendered text, not a real photo; documented as what it is):
 - [x] Clean receipt, correct amount (`5 USDT` vs a `5 USDT` invoice) → OCR detects 4 blocks, model extracts `5`, verdict `MATCH`, `modelDisagreed: false`.
